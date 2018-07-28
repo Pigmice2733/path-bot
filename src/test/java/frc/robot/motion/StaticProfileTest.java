@@ -3,10 +3,16 @@ package frc.robot.motion;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
+import frc.robot.ProfilePlotter;;
 
 public class StaticProfileTest {
 
     private static final double epsilon = 1e-6;
+
+    private static Boolean shouldGraph() {
+        String graphProp = System.getProperty("graph").toLowerCase();
+        return (graphProp.equals("true") || graphProp.equals("t"));
+    }
 
     public static class TrapezoidalTest {
         private static StaticProfile trapezoidalProfile = new StaticProfile(0.0, 0.0, 16.0, 4.0, 2.0, 1.0);
@@ -41,6 +47,14 @@ public class StaticProfileTest {
             Assert.assertEquals(15.5, trapezoidalProfile.getPosition(6.0), epsilon);
             Assert.assertEquals(15.875, trapezoidalProfile.getPosition(6.5), epsilon);
             Assert.assertEquals(16.0, trapezoidalProfile.getPosition(7.0), epsilon);
+        }
+
+        @AfterClass
+        public static void plot() {
+            if (shouldGraph()) {
+                ProfilePlotter.plotPosition(trapezoidalProfile, 0.1, "trapezoid");
+                ProfilePlotter.plotVelocity(trapezoidalProfile, 0.1, "trapezoid");
+            }
         }
     }
 
@@ -79,6 +93,13 @@ public class StaticProfileTest {
             Assert.assertEquals(16.0, wrongDirectionProfile.getPosition(8.0), epsilon);
         }
 
+        @AfterClass
+        public static void plot() {
+            if (shouldGraph()) {
+                ProfilePlotter.plotPosition(wrongDirectionProfile, 0.1, "wrongDir");
+                ProfilePlotter.plotVelocity(wrongDirectionProfile, 0.1, "wrongDir");
+            }
+        }
     }
 
     public static class TriangularTest {
@@ -112,8 +133,10 @@ public class StaticProfileTest {
 
         @AfterClass
         public static void plot() {
-            // ProfilePlotter.plotPosition(triangularProfile, 0.1, "triangle");
-            // ProfilePlotter.plotVelocity(triangularProfile, 0.1, "triangle");
+            if (shouldGraph()) {
+                ProfilePlotter.plotPosition(triangularProfile, 0.1, "triangle");
+                ProfilePlotter.plotVelocity(triangularProfile, 0.1, "triangle");
+            }
         }
     }
 }
