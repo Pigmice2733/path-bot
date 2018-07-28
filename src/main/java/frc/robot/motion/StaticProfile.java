@@ -30,8 +30,8 @@ public class StaticProfile {
         }
     }
 
-    public StaticProfile(double currentVelocity, double currentPosition, double targetDistance,
-            double maxVelocity, double maxAccel, double maxDecel) {
+    public StaticProfile(double currentVelocity, double currentPosition, double targetDistance, double maxVelocity,
+            double maxAccel, double maxDecel) {
         final double targetDisplacement = targetDistance - currentPosition;
         startingPosition = currentPosition;
         this.maxAccel = maxAccel;
@@ -46,8 +46,7 @@ public class StaticProfile {
         }
     }
 
-    private ArrayList<Chunk> computeChunks(ArrayList<Chunk> chunks, double startVelocity,
-            double remainingDistance) {
+    private ArrayList<Chunk> computeChunks(ArrayList<Chunk> chunks, double startVelocity, double remainingDistance) {
         Chunk chunk;
         // going in the wrong direction
         if (Math.signum(startVelocity) != Math.signum(remainingDistance) && startVelocity != 0) {
@@ -62,16 +61,16 @@ public class StaticProfile {
         // going at max speed
         else {
             // create chunk that transitions to 0
-            final Chunk decelChunk =
-                    Chunk.createVelocityTransition(startVelocity, 0, maxAccel, maxDecel);
+            final Chunk decelChunk = Chunk.createVelocityTransition(startVelocity, 0, maxAccel, maxDecel);
             if (decelChunk.getTotalDistance() < remainingDistance) {
                 // doesn't go far enough
-                chunk = Chunk.createConstantVelocity(maxVelocity,
-                        remainingDistance - decelChunk.getTotalDistance());
+                chunk = Chunk.createConstantVelocity(maxVelocity, remainingDistance - decelChunk.getTotalDistance());
             } else {
                 chunk = decelChunk;
-                // need to decide whether to create ending chunk here, or that it is a triangle
-                // and it needs to rewrite the chunks
+                if (decelChunk.getTotalDistance() > remainingDistance) {
+                    // TODO: REWRITE CHUNKS HERE
+                    return chunks;
+                }
             }
         }
         // going in the wrong direction: create a chunk that transitions to 0
@@ -85,8 +84,7 @@ public class StaticProfile {
         chunks.add(chunk);
         if (Math.abs(remainingDistance - chunk.getTotalDistance()) > epsilon) {
             // still has more distance to go
-            return computeChunks(chunks, chunk.getEndVelocity(),
-                    remainingDistance - chunk.getTotalDistance());
+            return computeChunks(chunks, chunk.getEndVelocity(), remainingDistance - chunk.getTotalDistance());
         }
         return chunks;
     }

@@ -17,8 +17,8 @@ public class Chunk {
         return new Chunk(distance, velocity, velocity, duration);
     }
 
-    public static Chunk createVelocityTransition(double startVelocity, double endVelocity,
-            double maxAccel, double maxDecel) {
+    public static Chunk createVelocityTransition(double startVelocity, double endVelocity, double maxAccel,
+            double maxDecel) {
         final double averageVelocity = (startVelocity + endVelocity) / 2;
         final double deltaVelocity = (endVelocity - startVelocity);
 
