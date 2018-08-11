@@ -52,21 +52,17 @@ public class StaticProfile {
         if (Math.signum(startVelocity) != Math.signum(remainingDistance) && startVelocity != 0 && chunks.size() == 0) {
             // transition to 0
             chunk = Chunk.createVelocityTransition(startVelocity, 0, maxAccel, maxDecel);
-            System.out.println("case 1");
         }
         // not going at max speed
         else if (Math.abs(Math.abs(startVelocity) - maxVelocity) > epsilon) {
             // transition to max speed
             chunk = Chunk.createVelocityTransition(startVelocity, maxVelocity * Math.signum(remainingDistance),
                     maxAccel, maxDecel);
-            System.out.println("case 2");
             // going at max speed
         } else {
-            System.out.println("case 3");
             Chunk decelChunk = Chunk.createVelocityTransition(startVelocity, 0, maxAccel, maxDecel);
             // not going far enough, need constant middle chunk
             if (Math.abs(decelChunk.getTotalDistance()) < Math.abs(remainingDistance)) {
-                System.out.println("not far enough, constant velocity");
                 chunk = Chunk.createConstantVelocity(maxVelocity * Math.signum(remainingDistance),
                         remainingDistance - decelChunk.getTotalDistance());
             } else {
@@ -74,7 +70,6 @@ public class StaticProfile {
                 chunk = decelChunk;
                 // goes too far, switch to triangle
                 if (Math.abs(decelChunk.getTotalDistance()) > Math.abs(remainingDistance)) {
-                    System.out.println("Too far, triangle");
                     remainingDistance += chunks.get(chunks.size() - 1).getTotalDistance();
                     startVelocity = chunks.get(chunks.size() - 1).getVelocity(0.0);
                     chunks.remove(chunks.size() - 1);
