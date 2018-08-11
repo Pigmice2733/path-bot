@@ -23,6 +23,8 @@ public class ProfilePlotter {
             data.add(i, profile.getVelocity(i));
         }
 
+        data.add(profile.profileDuration, profile.getVelocity(profile.profileDuration));
+
         plot(data, "Velocity", name);
     }
 
@@ -32,6 +34,7 @@ public class ProfilePlotter {
         for (double i = 0.0; i <= profile.profileDuration; i += step) {
             data.add(i, profile.getPosition(i));
         }
+        data.add(profile.profileDuration, profile.getPosition(profile.profileDuration));
 
         plot(data, "Position", name);
     }

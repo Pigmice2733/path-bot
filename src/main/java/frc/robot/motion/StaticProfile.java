@@ -49,30 +49,56 @@ public class StaticProfile {
     private ArrayList<Chunk> computeChunks(ArrayList<Chunk> chunks, double startVelocity, double remainingDistance) {
         Chunk chunk;
         // going in the wrong direction
-        if (Math.signum(startVelocity) != Math.signum(remainingDistance) && startVelocity != 0) {
+        if (Math.signum(startVelocity) != Math.signum(remainingDistance) && startVelocity != 0 && chunks.size() == 0) {
             // transition to 0
             chunk = Chunk.createVelocityTransition(startVelocity, 0, maxAccel, maxDecel);
+            System.out.println("case 1");
         }
         // not going at max speed
-        else if (startVelocity != maxVelocity) {
+        else if (Math.abs(Math.abs(startVelocity) - maxVelocity) > epsilon) {
             // transition to max speed
-            chunk = Chunk.createVelocityTransition(startVelocity, maxVelocity, maxAccel, maxDecel);
-        }
-        // going at max speed
-        else {
-            // create chunk that transitions to 0
-            final Chunk decelChunk = Chunk.createVelocityTransition(startVelocity, 0, maxAccel, maxDecel);
-            if (decelChunk.getTotalDistance() < remainingDistance) {
-                // doesn't go far enough
-                chunk = Chunk.createConstantVelocity(maxVelocity, remainingDistance - decelChunk.getTotalDistance());
+            chunk = Chunk.createVelocityTransition(startVelocity, maxVelocity * Math.signum(remainingDistance),
+                    maxAccel, maxDecel);
+            System.out.println("case 2");
+            // going at max speed
+        } else {
+            System.out.println("case 3");
+            Chunk decelChunk = Chunk.createVelocityTransition(startVelocity, 0, maxAccel, maxDecel);
+            // not going far enough, need constant middle chunk
+            if (Math.abs(decelChunk.getTotalDistance()) < Math.abs(remainingDistance)) {
+                System.out.println("not far enough, constant velocity");
+                chunk = Chunk.createConstantVelocity(maxVelocity * Math.signum(remainingDistance),
+                        remainingDistance - decelChunk.getTotalDistance());
             } else {
+                // normal decel
                 chunk = decelChunk;
-                if (decelChunk.getTotalDistance() > remainingDistance) {
-                    // TODO: REWRITE CHUNKS HERE
+                // goes too far, switch to triangle
+                if (Math.abs(decelChunk.getTotalDistance()) > Math.abs(remainingDistance)) {
+                    System.out.println("Too far, triangle");
+                    remainingDistance += chunks.get(chunks.size() - 1).getTotalDistance();
+                    startVelocity = chunks.get(chunks.size() - 1).getVelocity(0.0);
+                    chunks.remove(chunks.size() - 1);
+
+                    double beforeQuadrilateralDistance = 0.5 * (startVelocity * startVelocity) / maxAccel;
+                    double fullTriangleDistance = Math.abs(remainingDistance + beforeQuadrilateralDistance);
+
+                    double fullAccelerationTime = maxVelocity / maxAccel;
+                    double decelerationTime = maxVelocity / maxDecel;
+                    double timeRatio = fullAccelerationTime / (fullAccelerationTime + decelerationTime);
+
+                    double accelerationDistance = timeRatio * fullTriangleDistance;
+                    double accelerationTime = Math.sqrt((2 * accelerationDistance) / maxAccel);
+
+                    double triangleMaxSpeed = accelerationTime * maxAccel * Math.signum(remainingDistance);
+
+                    chunks.add(Chunk.createVelocityTransition(startVelocity, triangleMaxSpeed, maxAccel, maxDecel));
+                    chunks.add(Chunk.createVelocityTransition(triangleMaxSpeed, 0, maxAccel, maxDecel));
+
                     return chunks;
                 }
             }
         }
+
         // going in the wrong direction: create a chunk that transitions to 0
         // going faster than max speed: transition to max speed
         // going slower than max speed: transition to max speed
