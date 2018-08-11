@@ -5,17 +5,9 @@ jobs:
       - image: circleci/openjdk:10
     steps:
       - checkout
-      - restore_cache:
-          keys:
-          - v1-dependencies-{{ checksum "build.gradle" }}
-          - v1-dependencies-
       - run:
           name: Install Dependencies
           command: gradle dependencies
-      - save_cache:
-          paths:
-            - ~/.gradle
-          key: v1-dependencies-{{ checksum "build.gradle" }}
       - run:
           name: Test
           command: ./gradlew test
