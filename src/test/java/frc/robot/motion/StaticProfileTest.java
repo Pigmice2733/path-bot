@@ -9,12 +9,14 @@ public class StaticProfileTest {
 
     private static final double epsilon = 1e-6;
 
-    private static Boolean shouldGraph() {
+    private static Boolean shouldGraph(String graphName) {
         String graphProp = System.getProperty("graph").toLowerCase();
-        return (graphProp.equals("true") || graphProp.equals("t"));
+        return (graphProp.equals("true") || graphProp.equals("t") || graphProp.equals("all") || graphProp.equals("a")
+                || graphProp.equals(graphName.toLowerCase()));
     }
 
     public static class TrapezoidalTest {
+        // Pure trapezoid
         private static StaticProfile trapezoidalProfile = new StaticProfile(0.0, 0.0, 16.0, 4.0, 2.0, 1.0);
 
         @Test
@@ -51,7 +53,7 @@ public class StaticProfileTest {
 
         @AfterClass
         public static void plot() {
-            if (shouldGraph()) {
+            if (shouldGraph("trapezoid")) {
                 ProfilePlotter.plotPosition(trapezoidalProfile, 0.1, "trapezoid");
                 ProfilePlotter.plotVelocity(trapezoidalProfile, 0.1, "trapezoid");
             }
@@ -59,6 +61,7 @@ public class StaticProfileTest {
     }
 
     public static class WrongDirectionTest {
+        // Trapezoid with leading wrong direction
         private static StaticProfile wrongDirectionProfile = new StaticProfile(-1, 0.5, 16.0, 4.0, 2.0, 1.0);
 
         @Test
@@ -95,7 +98,7 @@ public class StaticProfileTest {
 
         @AfterClass
         public static void plot() {
-            if (shouldGraph()) {
+            if (shouldGraph("wrongDir")) {
                 ProfilePlotter.plotPosition(wrongDirectionProfile, 0.1, "wrongDir");
                 ProfilePlotter.plotVelocity(wrongDirectionProfile, 0.1, "wrongDir");
             }
@@ -103,6 +106,7 @@ public class StaticProfileTest {
     }
 
     public static class TriangularTest {
+        // Pure triangle
         private static StaticProfile triangularProfile = new StaticProfile(0.0, 0.0, 35.69, 9.0, 2.0, 2.15);
 
         @Test
@@ -133,14 +137,15 @@ public class StaticProfileTest {
 
         @AfterClass
         public static void plot() {
-            if (shouldGraph()) {
+            if (shouldGraph("triangle")) {
                 ProfilePlotter.plotPosition(triangularProfile, 0.1, "triangle");
                 ProfilePlotter.plotVelocity(triangularProfile, 0.1, "triangle");
             }
         }
     }
 
-    public static class QuadrilateralTest {
+    public static class PartialTriangleTest {
+        // Starts partway into triangle, leading corner chopped off
         private static StaticProfile quadrilateralProfile = new StaticProfile(1.0, 0.0, 5.5, 5.0, 1.0, 0.5);
 
         @Test
@@ -171,14 +176,15 @@ public class StaticProfileTest {
 
         @AfterClass
         public static void plot() {
-            if (shouldGraph()) {
-                ProfilePlotter.plotPosition(quadrilateralProfile, 0.1, "quadrilateral");
-                ProfilePlotter.plotVelocity(quadrilateralProfile, 0.1, "quadrilateral");
+            if (shouldGraph("partialTriangle")) {
+                ProfilePlotter.plotPosition(quadrilateralProfile, 0.1, "partialTriangle");
+                ProfilePlotter.plotVelocity(quadrilateralProfile, 0.1, "partialTriangle");
             }
         }
     }
 
     public static class ReverseTriangularTest {
+        // Negative triangle profile, reverse direction
         private static StaticProfile reverseTriangleProfile = new StaticProfile(0.0, 0.0, -35.69, 9.0, 2.0, 2.15);
 
         @Test
@@ -209,14 +215,15 @@ public class StaticProfileTest {
 
         @AfterClass
         public static void plot() {
-            if (shouldGraph()) {
+            if (shouldGraph("reverseTriangle")) {
                 ProfilePlotter.plotPosition(reverseTriangleProfile, 0.1, "reverseTriangle");
                 ProfilePlotter.plotVelocity(reverseTriangleProfile, 0.1, "reverseTriangle");
             }
         }
     }
 
-    public static class PentagonTest {
+    public static class PartialTrapezoidTest {
+        // Starts partway into trapezoid, leading corner chopped off
         private static StaticProfile pentagonProfile = new StaticProfile(2.5, 0.0, 11.25, 5.0, 2.5, 5.0);
 
         @Test
@@ -250,9 +257,149 @@ public class StaticProfileTest {
 
         @AfterClass
         public static void plot() {
-            if (shouldGraph()) {
-                ProfilePlotter.plotPosition(pentagonProfile, 0.1, "pentagon");
-                ProfilePlotter.plotVelocity(pentagonProfile, 0.1, "pentagon");
+            if (shouldGraph("partialTrapezoid")) {
+                ProfilePlotter.plotPosition(pentagonProfile, 0.1, "partialTrapezoid");
+                ProfilePlotter.plotVelocity(pentagonProfile, 0.1, "partialTrapezoid");
+            }
+        }
+    }
+
+    public static class DecelerationTest {
+        // Needs to decelerate directly from start of profile
+        private static StaticProfile decelerationProfile = new StaticProfile(4.0, 4.0, 12.0, 6.0, 2.0, 1.0);
+
+        @Test
+        public void getVelocity() {
+
+            // Deceleration
+            Assert.assertEquals(4.0, decelerationProfile.getVelocity(0.0), epsilon);
+            Assert.assertEquals(2.0, decelerationProfile.getVelocity(2.0), epsilon);
+            Assert.assertEquals(0.0, decelerationProfile.getVelocity(4.0), epsilon);
+        }
+
+        @Test
+        public void getPosition() {
+            // Deceleration
+            Assert.assertEquals(4.0, decelerationProfile.getPosition(0.0), epsilon);
+            Assert.assertEquals(10.0, decelerationProfile.getPosition(2.0), epsilon);
+            Assert.assertEquals(12.0, decelerationProfile.getPosition(4.0), epsilon);
+        }
+
+        @AfterClass
+        public static void plot() {
+            if (shouldGraph("deceleration")) {
+                ProfilePlotter.plotPosition(decelerationProfile, 0.1, "deceleration");
+                ProfilePlotter.plotVelocity(decelerationProfile, 0.1, "deceleration");
+            }
+        }
+    }
+
+    public static class MaxSpeedToDecelerationTest {
+        // Starts at max speed, decelerates after max speed chunk
+        private static StaticProfile maxSpeedToDecelerationProfile = new StaticProfile(8.0, 0.0, 40.0, 8.0, 2.0, 1.0);
+
+        @Test
+        public void getVelocity() {
+            // Max velocity
+            Assert.assertEquals(8.0, maxSpeedToDecelerationProfile.getVelocity(0.0), epsilon);
+            Assert.assertEquals(8.0, maxSpeedToDecelerationProfile.getVelocity(1.0), epsilon);
+
+            // Deceleration
+            Assert.assertEquals(7.0, maxSpeedToDecelerationProfile.getVelocity(2.0), epsilon);
+            Assert.assertEquals(2.5, maxSpeedToDecelerationProfile.getVelocity(6.5), epsilon);
+            Assert.assertEquals(0.0, maxSpeedToDecelerationProfile.getVelocity(9.0), epsilon);
+        }
+
+        @Test
+        public void getPosition() {
+            // Max velocity
+            Assert.assertEquals(0.0, maxSpeedToDecelerationProfile.getPosition(0.0), epsilon);
+            Assert.assertEquals(8.0, maxSpeedToDecelerationProfile.getPosition(1.0), epsilon);
+
+            // Deceleration
+            Assert.assertEquals(22.0, maxSpeedToDecelerationProfile.getPosition(3.0), epsilon);
+            Assert.assertEquals(38.0, maxSpeedToDecelerationProfile.getPosition(7.0), epsilon);
+            Assert.assertEquals(40.0, maxSpeedToDecelerationProfile.getPosition(9.0), epsilon);
+        }
+
+        @AfterClass
+        public static void plot() {
+            if (shouldGraph("maxSpeedDecel")) {
+                ProfilePlotter.plotPosition(maxSpeedToDecelerationProfile, 0.1, "maxSpeedDecel");
+                ProfilePlotter.plotVelocity(maxSpeedToDecelerationProfile, 0.1, "maxSpeedDecel");
+            }
+        }
+    }
+
+    public static class OvershootFromMaxSpeedTest {
+        // Starts at max speed, overshoots while decelerating - needs to backtrack
+        private static StaticProfile OvershootFromMaxSpeed = new StaticProfile(10.0, 0.0, 34.0, 10.0, 1.0, 1.0);
+
+        @Test
+        public void getVelocity() {
+            // Deceleration
+            Assert.assertEquals(10.0, OvershootFromMaxSpeed.getVelocity(0.0), epsilon);
+            Assert.assertEquals(0.0, OvershootFromMaxSpeed.getVelocity(10.0), epsilon);
+
+            // Backtrack triangle
+            Assert.assertEquals(-4.0, OvershootFromMaxSpeed.getVelocity(14.0), epsilon);
+            Assert.assertEquals(0.0, OvershootFromMaxSpeed.getVelocity(18.0), epsilon);
+        }
+
+        @Test
+        public void getPosition() {
+            // Deceleration
+            Assert.assertEquals(0.0, OvershootFromMaxSpeed.getPosition(0.0), epsilon);
+            Assert.assertEquals(50.0, OvershootFromMaxSpeed.getPosition(10.0), epsilon);
+
+            // Backtrack triangle
+            Assert.assertEquals(42.0, OvershootFromMaxSpeed.getPosition(14.0), epsilon);
+            Assert.assertEquals(34.0, OvershootFromMaxSpeed.getPosition(18.0), epsilon);
+        }
+
+        @AfterClass
+        public static void plot() {
+            if (shouldGraph("overshootMax")) {
+                ProfilePlotter.plotPosition(OvershootFromMaxSpeed, 0.1, "overshootMax");
+                ProfilePlotter.plotVelocity(OvershootFromMaxSpeed, 0.1, "overshootMax");
+            }
+        }
+    }
+
+    public static class HighSpeedOvershootTest {
+        // Starts at max speed, overshoots while decelerating - needs to backtrack
+        private static StaticProfile HighSpeedOvershoot = new StaticProfile(50.0, 0.0, 1000.0, 10.0, 1.0, 1.0);
+
+        @Test
+        public void getVelocity() {
+            // Deceleration
+            Assert.assertEquals(50.0, HighSpeedOvershoot.getVelocity(0.0), epsilon);
+            Assert.assertEquals(0.0, HighSpeedOvershoot.getVelocity(50.0), epsilon);
+
+            // Backtrack trapezoid
+            Assert.assertEquals(-10.0, HighSpeedOvershoot.getVelocity(60.0), epsilon);
+            Assert.assertEquals(-10.0, HighSpeedOvershoot.getVelocity(75.0), epsilon);
+            Assert.assertEquals(-5.0, HighSpeedOvershoot.getVelocity(80.0), epsilon);
+            Assert.assertEquals(0.0, HighSpeedOvershoot.getVelocity(85.0), epsilon);
+        }
+
+        @Test
+        public void getPosition() {
+            // Deceleration
+            Assert.assertEquals(0.0, HighSpeedOvershoot.getPosition(0.0), epsilon);
+            Assert.assertEquals(1250.0, HighSpeedOvershoot.getPosition(50.0), epsilon);
+
+            // Backtrack trapezoid
+            Assert.assertEquals(1200.0, HighSpeedOvershoot.getPosition(60.0), epsilon);
+            Assert.assertEquals(1050.0, HighSpeedOvershoot.getPosition(75.0), epsilon);
+            Assert.assertEquals(1000.0, HighSpeedOvershoot.getPosition(85.0), epsilon);
+        }
+
+        @AfterClass
+        public static void plot() {
+            if (shouldGraph("highOvershoot")) {
+                ProfilePlotter.plotPosition(HighSpeedOvershoot, 0.1, "highOvershoot");
+                ProfilePlotter.plotVelocity(HighSpeedOvershoot, 0.1, "highOvershoot");
             }
         }
     }

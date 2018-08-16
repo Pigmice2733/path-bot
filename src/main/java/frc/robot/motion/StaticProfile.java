@@ -46,65 +46,110 @@ public class StaticProfile {
         }
     }
 
-    private ArrayList<Chunk> computeChunks(ArrayList<Chunk> chunks, double startVelocity, double remainingDistance) {
-        Chunk chunk;
-        // going in the wrong direction
-        if (Math.signum(startVelocity) != Math.signum(remainingDistance) && startVelocity != 0 && chunks.size() == 0) {
-            // transition to 0
-            chunk = Chunk.createVelocityTransition(startVelocity, 0, maxAccel, maxDecel);
+    private ArrayList<Chunk> computeChunks(ArrayList<Chunk> chunks, double currentVelocity, double remainingDistance) {
+        final Chunk chunk;
+
+        double stoppingDistance = 0.5 * (Math.abs(currentVelocity) / maxDecel) * currentVelocity;
+        double targetDirection = Math.signum(remainingDistance);
+        double currentDirection = Math.signum(currentVelocity);
+
+        /***
+         * If going in the wrong direction and at start of profile: transition to
+         * stopped
+         *
+         * Else if stopping distance > remaining distance and at start of profile:
+         * transition to stopped
+         *
+         * Else if going faster than max speed: transition to max speed
+         *
+         * Else if going slower than max speed:
+         * --- If stopping distance < remaining distance: transition to max speed
+         * --- Else: transition to stopped
+         *
+         * Otherwise, must be going at max speed
+         * --- If stopping distance < remaining distance: max velocity transition
+         *
+         * --- Else if stopping distance == remaining distance: transition to stopped
+         *
+         * --- Else, goes to far - triangular profile:
+         * --- --- Rewrite profile into triangle
+         * --- --- Target distance has been reached, return all chunks
+         ***/
+
+        // If going in the wrong direction and at start of profile
+        if (currentDirection != targetDirection && currentVelocity != 0 && chunks.size() == 0) {
+            // transition to stopped
+            chunk = Chunk.createVelocityTransition(currentVelocity, 0, maxAccel, maxDecel);
         }
-        // not going at max speed
-        else if (Math.abs(Math.abs(startVelocity) - maxVelocity) > epsilon) {
+        // Else if stopping distance > remaining distance
+        else if (Math.abs(stoppingDistance) > Math.abs(remainingDistance) && chunks.size() == 0) {
+            // transition to stopped
+            chunk = Chunk.createVelocityTransition(currentVelocity, 0, maxAccel, maxDecel);
+        }
+        // Else if going faster than max speed
+        else if (Math.abs(currentVelocity) > maxVelocity) {
             // transition to max speed
-            chunk = Chunk.createVelocityTransition(startVelocity, maxVelocity * Math.signum(remainingDistance),
-                    maxAccel, maxDecel);
-            // going at max speed
-        } else {
-            Chunk decelChunk = Chunk.createVelocityTransition(startVelocity, 0, maxAccel, maxDecel);
-            // not going far enough, need constant middle chunk
-            if (Math.abs(decelChunk.getTotalDistance()) < Math.abs(remainingDistance)) {
-                chunk = Chunk.createConstantVelocity(maxVelocity * Math.signum(remainingDistance),
-                        remainingDistance - decelChunk.getTotalDistance());
+            chunk = Chunk.createVelocityTransition(currentVelocity, maxVelocity * targetDirection, maxAccel, maxDecel);
+        }
+        // Else if going slower than max speed
+        else if (Math.abs(currentVelocity) < maxVelocity) {
+            // If stopping distance < remaining distance
+            if (Math.abs(stoppingDistance) < Math.abs(remainingDistance)) {
+                // transition to max speed
+                chunk = Chunk.createVelocityTransition(currentVelocity, maxVelocity * targetDirection, maxAccel,
+                        maxDecel);
             } else {
-                // normal decel
-                chunk = decelChunk;
-                // goes too far, switch to triangle
-                if (Math.abs(decelChunk.getTotalDistance()) > Math.abs(remainingDistance)) {
-                    remainingDistance += chunks.get(chunks.size() - 1).getTotalDistance();
-                    startVelocity = chunks.get(chunks.size() - 1).getVelocity(0.0);
-                    chunks.remove(chunks.size() - 1);
+                // transiton to stopped
+                chunk = Chunk.createVelocityTransition(currentVelocity, 0, maxAccel, maxDecel);
+            }
+        }
+        // Otherwise, must be going at max speed
+        else {
+            // If stopping distance < remaining distance
+            if (Math.abs(stoppingDistance) < Math.abs(remainingDistance)) {
+                // max velocity transition - make up difference
+                chunk = Chunk.createConstantVelocity(maxVelocity * targetDirection,
+                        remainingDistance - stoppingDistance);
+            }
+            // Else if stopping distance == remaining distance
+            else if (Math.abs(stoppingDistance - remainingDistance) < epsilon) {
+                // transition to stopped
+                chunk = Chunk.createVelocityTransition(maxVelocity * targetDirection, 0, maxAccel, maxDecel);
+            }
+            // Else, goes to far - triangular profile
+            else {
+                // Remove previous chunk
+                remainingDistance += chunks.get(chunks.size() - 1).getTotalDistance();
+                currentVelocity = chunks.get(chunks.size() - 1).getVelocity(0.0);
+                stoppingDistance = 0.5 * (currentVelocity / maxDecel) * currentVelocity;
+                targetDirection = Math.signum(remainingDistance);
+                currentDirection = Math.signum(currentVelocity);
+                chunks.remove(chunks.size() - 1);
 
-                    double beforeQuadrilateralDistance = 0.5 * (startVelocity * startVelocity) / maxAccel;
-                    double fullTriangleDistance = Math.abs(remainingDistance + beforeQuadrilateralDistance);
+                // Account for non-zero velocities going into triangular section of profile
+                double precedingTriangleArea = 0.5 * (currentVelocity * currentVelocity) / maxAccel;
+                double fullTriangleDistance = Math.abs(remainingDistance + precedingTriangleArea);
 
-                    double fullAccelerationTime = maxVelocity / maxAccel;
-                    double decelerationTime = maxVelocity / maxDecel;
-                    double timeRatio = fullAccelerationTime / (fullAccelerationTime + decelerationTime);
+                // Calculate ratio between accel and decel distance of triangle
+                double accelerationTime = maxVelocity / maxAccel;
+                double decelerationTime = maxVelocity / maxDecel;
+                double ratio = accelerationTime / (accelerationTime + decelerationTime);
 
-                    double accelerationDistance = timeRatio * fullTriangleDistance;
-                    double accelerationTime = Math.sqrt((2 * accelerationDistance) / maxAccel);
+                double accelerationDistance = ratio * fullTriangleDistance;
 
-                    double triangleMaxSpeed = accelerationTime * maxAccel * Math.signum(remainingDistance);
+                double triangleMaxSpeed = Math.sqrt(2 * accelerationDistance * maxAccel) * targetDirection;
 
-                    chunks.add(Chunk.createVelocityTransition(startVelocity, triangleMaxSpeed, maxAccel, maxDecel));
-                    chunks.add(Chunk.createVelocityTransition(triangleMaxSpeed, 0, maxAccel, maxDecel));
+                chunks.add(Chunk.createVelocityTransition(currentVelocity, triangleMaxSpeed, maxAccel, maxDecel));
+                chunks.add(Chunk.createVelocityTransition(triangleMaxSpeed, 0, maxAccel, maxDecel));
 
-                    return chunks;
-                }
+                // Target distance has been reached, return all chunks
+                return chunks;
             }
         }
 
-        // going in the wrong direction: create a chunk that transitions to 0
-        // going faster than max speed: transition to max speed
-        // going slower than max speed: transition to max speed
-        // going at max speed:
-        // create a chunk that goes to zero
-        // if that chunk distance is total distance, use that chunk
-        // otherwise create a new constant chunk that is the rest of the distance
-
         chunks.add(chunk);
         if (Math.abs(remainingDistance - chunk.getTotalDistance()) > epsilon) {
-            // still has more distance to go
+            // still have farther to go
             return computeChunks(chunks, chunk.getEndVelocity(), remainingDistance - chunk.getTotalDistance());
         }
         return chunks;
