@@ -130,10 +130,10 @@ public class StaticProfile {
                 double precedingTriangleArea = 0.5 * (currentVelocity * currentVelocity) / maxAccel;
                 double fullTriangleDistance = Math.abs(remainingDistance + precedingTriangleArea);
 
-                // Calculate ratio between accel and decel distance of triangle
-                double accelerationTime = maxVelocity / maxAccel;
-                double decelerationTime = maxVelocity / maxDecel;
-                double ratio = accelerationTime / (accelerationTime + decelerationTime);
+                // Calculate ratio of accel distance to full distance of triangular profile
+                double fullAccelerationDistance = 0.5 * maxVelocity * (maxVelocity / maxAccel);
+                double fullDecelerationDistance = 0.5 * maxVelocity * (maxVelocity / maxDecel);
+                double ratio = fullAccelerationDistance / (fullAccelerationDistance + fullDecelerationDistance);
 
                 double accelerationDistance = ratio * fullTriangleDistance;
 
