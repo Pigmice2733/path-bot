@@ -3,9 +3,10 @@ package frc.robot.motion;
 import java.lang.Math;
 import java.util.ArrayList;
 
+import frc.robot.Utils;
+
 public class StaticProfile {
 
-    private static final double epsilon = 1e-6;
     private final ArrayList<Chunk> chunks;
     private double maxAccel, maxDecel, maxVelocity, startingPosition;
     public double profileDuration;
@@ -56,14 +57,14 @@ public class StaticProfile {
         // If going in the wrong direction and at start of profile
         // --- After this check, remainingDistance, targetDirection, currentVelocity,
         // --- stoppingDistance, currentDirecton will all have the same sign
-        if (currentDirection != targetDirection && currentVelocity != 0 && chunks.size() == 0) {
+        if (currentDirection != targetDirection && currentVelocity != 0.0 && chunks.size() == 0) {
             // transition to stopped
-            chunk = Chunk.createVelocityTransition(currentVelocity, 0, maxAccel, maxDecel);
+            chunk = Chunk.createVelocityTransition(currentVelocity, 0.0, maxAccel, maxDecel);
         }
         // Else if going to overshoot and at start of profile
         else if (Math.abs(stoppingDistance) > Math.abs(remainingDistance) && chunks.size() == 0) {
             // transition to stopped
-            chunk = Chunk.createVelocityTransition(currentVelocity, 0, maxAccel, maxDecel);
+            chunk = Chunk.createVelocityTransition(currentVelocity, 0.0, maxAccel, maxDecel);
         }
         // Else if going faster than max speed
         else if (Math.abs(currentVelocity) > maxVelocity) {
@@ -79,7 +80,7 @@ public class StaticProfile {
                         maxDecel);
             } else {
                 // transiton to stopped
-                chunk = Chunk.createVelocityTransition(currentVelocity, 0, maxAccel, maxDecel);
+                chunk = Chunk.createVelocityTransition(currentVelocity, 0.0, maxAccel, maxDecel);
             }
         }
         // Otherwise, must be going at max speed
@@ -91,9 +92,9 @@ public class StaticProfile {
                         remainingDistance - stoppingDistance);
             }
             // Else if stopping distance == remaining distance
-            else if (Math.abs(stoppingDistance - remainingDistance) < epsilon) {
+            else if (Utils.almostEquals(stoppingDistance, remainingDistance)) {
                 // transition to stopped
-                chunk = Chunk.createVelocityTransition(maxVelocity * targetDirection, 0, maxAccel, maxDecel);
+                chunk = Chunk.createVelocityTransition(maxVelocity * targetDirection, 0.0, maxAccel, maxDecel);
             }
             // Else, not enough time to stop - must be triangular profile b/c overshoot
             // would have been handled already
@@ -121,7 +122,7 @@ public class StaticProfile {
                 double triangleMaxSpeed = Math.sqrt(2 * accelerationDistance * maxAccel) * targetDirection;
 
                 chunks.add(Chunk.createVelocityTransition(currentVelocity, triangleMaxSpeed, maxAccel, maxDecel));
-                chunks.add(Chunk.createVelocityTransition(triangleMaxSpeed, 0, maxAccel, maxDecel));
+                chunks.add(Chunk.createVelocityTransition(triangleMaxSpeed, 0.0, maxAccel, maxDecel));
 
                 // Target distance has been reached, return all chunks
                 return chunks;
@@ -129,7 +130,7 @@ public class StaticProfile {
         }
 
         chunks.add(chunk);
-        if (Math.abs(remainingDistance - chunk.getTotalDistance()) > epsilon) {
+        if (!Utils.almostEquals(remainingDistance, chunk.getTotalDistance())) {
             // still have farther to go
             return computeChunks(chunks, chunk.getEndVelocity(), remainingDistance - chunk.getTotalDistance());
         }
