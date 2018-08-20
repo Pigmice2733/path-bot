@@ -53,35 +53,14 @@ public class StaticProfile {
         double targetDirection = Math.signum(remainingDistance);
         double currentDirection = Math.signum(currentVelocity);
 
-        /***
-         * If going in the wrong direction and at start of profile: transition to
-         * stopped
-         *
-         * Else if stopping distance > remaining distance and at start of profile:
-         * transition to stopped
-         *
-         * Else if going faster than max speed: transition to max speed
-         *
-         * Else if going slower than max speed:
-         * --- If stopping distance < remaining distance: transition to max speed
-         * --- Else: transition to stopped
-         *
-         * Otherwise, must be going at max speed
-         * --- If stopping distance < remaining distance: max velocity transition
-         *
-         * --- Else if stopping distance == remaining distance: transition to stopped
-         *
-         * --- Else, goes to far - triangular profile:
-         * --- --- Rewrite profile into triangle
-         * --- --- Target distance has been reached, return all chunks
-         ***/
-
         // If going in the wrong direction and at start of profile
+        // --- After this check, remainingDistance, targetDirection, currentVelocity,
+        // --- stoppingDistance, currentDirecton will all have the same sign
         if (currentDirection != targetDirection && currentVelocity != 0 && chunks.size() == 0) {
             // transition to stopped
             chunk = Chunk.createVelocityTransition(currentVelocity, 0, maxAccel, maxDecel);
         }
-        // Else if stopping distance > remaining distance
+        // Else if going to overshoot and at start of profile
         else if (Math.abs(stoppingDistance) > Math.abs(remainingDistance) && chunks.size() == 0) {
             // transition to stopped
             chunk = Chunk.createVelocityTransition(currentVelocity, 0, maxAccel, maxDecel);
@@ -93,7 +72,7 @@ public class StaticProfile {
         }
         // Else if going slower than max speed
         else if (Math.abs(currentVelocity) < maxVelocity) {
-            // If stopping distance < remaining distance
+            // If there is excess time to stop
             if (Math.abs(stoppingDistance) < Math.abs(remainingDistance)) {
                 // transition to max speed
                 chunk = Chunk.createVelocityTransition(currentVelocity, maxVelocity * targetDirection, maxAccel,
@@ -105,9 +84,9 @@ public class StaticProfile {
         }
         // Otherwise, must be going at max speed
         else {
-            // If stopping distance < remaining distance
+            // If there is excess time to stop
             if (Math.abs(stoppingDistance) < Math.abs(remainingDistance)) {
-                // max velocity transition - make up difference
+                // max velocity transition - continue at max speed for efficiency
                 chunk = Chunk.createConstantVelocity(maxVelocity * targetDirection,
                         remainingDistance - stoppingDistance);
             }
@@ -116,7 +95,8 @@ public class StaticProfile {
                 // transition to stopped
                 chunk = Chunk.createVelocityTransition(maxVelocity * targetDirection, 0, maxAccel, maxDecel);
             }
-            // Else, goes to far - triangular profile
+            // Else, not enough time to stop - must be triangular profile b/c overshoot
+            // would have been handled already
             else {
                 // Remove previous chunk
                 remainingDistance += chunks.get(chunks.size() - 1).getTotalDistance();
@@ -137,6 +117,7 @@ public class StaticProfile {
 
                 double accelerationDistance = ratio * fullTriangleDistance;
 
+                // Max speed robot can reach during this section of profile without overshooting
                 double triangleMaxSpeed = Math.sqrt(2 * accelerationDistance * maxAccel) * targetDirection;
 
                 chunks.add(Chunk.createVelocityTransition(currentVelocity, triangleMaxSpeed, maxAccel, maxDecel));
