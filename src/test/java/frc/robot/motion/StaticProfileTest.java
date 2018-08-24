@@ -79,6 +79,11 @@ public class StaticProfileTest {
             Assert.assertEquals(-1, trapezoidalProfile.getAcceleration(7.0), epsilon);
         }
 
+        @Test
+        public void getDuration() {
+            Assert.assertEquals(7.0, trapezoidalProfile.getDuration(), epsilon);
+        }
+
         @AfterClass
         public static void plot() {
             plotProfile(trapezoidalProfile, "trapezoid");
@@ -149,6 +154,11 @@ public class StaticProfileTest {
             Assert.assertEquals(-1, wrongDirectionProfile.getAcceleration(8.0), epsilon);
         }
 
+        @Test
+        public void getDuration() {
+            Assert.assertEquals(8.0, wrongDirectionProfile.getDuration(), epsilon);
+        }
+
         @AfterClass
         public static void plot() {
             plotProfile(wrongDirectionProfile, "wrongDir");
@@ -194,6 +204,11 @@ public class StaticProfileTest {
             // Deceleration
             Assert.assertEquals(-2.15, triangularProfile.getAcceleration(4.4), epsilon);
             Assert.assertEquals(-2.15, triangularProfile.getAcceleration(8.3), epsilon);
+        }
+
+        @Test
+        public void getDuration() {
+            Assert.assertEquals(8.3, triangularProfile.getDuration(), epsilon);
         }
 
         @AfterClass
@@ -247,6 +262,11 @@ public class StaticProfileTest {
         public static void plot() {
             plotProfile(quadrilateralProfile, "partialTriangle");
         }
+
+        @Test
+        public void getDuration() {
+            Assert.assertEquals(5.0, quadrilateralProfile.getDuration(), epsilon);
+        }
     }
 
     public static class ReverseTriangularTest {
@@ -288,6 +308,11 @@ public class StaticProfileTest {
             // Deceleration
             Assert.assertEquals(2.15, reverseTriangleProfile.getAcceleration(4.4), epsilon);
             Assert.assertEquals(2.15, reverseTriangleProfile.getAcceleration(5.0), epsilon);
+        }
+
+        @Test
+        public void getDuration() {
+            Assert.assertEquals(8.3, reverseTriangleProfile.getDuration(), epsilon);
         }
 
         @AfterClass
@@ -344,6 +369,11 @@ public class StaticProfileTest {
             Assert.assertEquals(-5.0, pentagonProfile.getAcceleration(3.0), epsilon);
         }
 
+        @Test
+        public void getDuration() {
+            Assert.assertEquals(3.0, pentagonProfile.getDuration(), epsilon);
+        }
+
         @AfterClass
         public static void plot() {
             plotProfile(pentagonProfile, "partialTrapezoid");
@@ -377,6 +407,11 @@ public class StaticProfileTest {
             Assert.assertEquals(-1.0, decelerationProfile.getAcceleration(0.0), epsilon);
             Assert.assertEquals(-1.0, decelerationProfile.getAcceleration(2.0), epsilon);
             Assert.assertEquals(-1.0, decelerationProfile.getAcceleration(4.0), epsilon);
+        }
+
+        @Test
+        public void getDuration() {
+            Assert.assertEquals(4.0, decelerationProfile.getDuration(), epsilon);
         }
 
         @AfterClass
@@ -425,9 +460,77 @@ public class StaticProfileTest {
             Assert.assertEquals(-1.0, maxSpeedToDecelerationProfile.getAcceleration(9.0), epsilon);
         }
 
+        @Test
+        public void getDuration() {
+            Assert.assertEquals(9.0, maxSpeedToDecelerationProfile.getDuration(), epsilon);
+        }
+
         @AfterClass
         public static void plot() {
             plotProfile(maxSpeedToDecelerationProfile, "maxSpeedDecel");
+        }
+    }
+
+    public static class HighSpeedDecelerationTest {
+        // Starts above max speed, decelerates to max speed, and then to zero
+        private static StaticProfile highSpeedDecelerationProfile = new StaticProfile(10.0, 0.0, 58.0, 8.0, 2.0, 1.0);
+
+        @Test
+        public void getVelocity() {
+            // Decel to max speed
+            Assert.assertEquals(10.0, highSpeedDecelerationProfile.getVelocity(0.0), epsilon);
+            Assert.assertEquals(9.0, highSpeedDecelerationProfile.getVelocity(1.0), epsilon);
+
+            // Max velocity
+            Assert.assertEquals(8.0, highSpeedDecelerationProfile.getVelocity(2.0), epsilon);
+            Assert.assertEquals(8.0, highSpeedDecelerationProfile.getVelocity(3.0), epsilon);
+
+            // Deceleration
+            Assert.assertEquals(7.0, highSpeedDecelerationProfile.getVelocity(4.0), epsilon);
+            Assert.assertEquals(2.5, highSpeedDecelerationProfile.getVelocity(8.5), epsilon);
+            Assert.assertEquals(0.0, highSpeedDecelerationProfile.getVelocity(11.0), epsilon);
+        }
+
+        @Test
+        public void getPosition() {
+            // Decel to max speed
+            Assert.assertEquals(0.0, highSpeedDecelerationProfile.getPosition(0.0), epsilon);
+            Assert.assertEquals(9.5, highSpeedDecelerationProfile.getPosition(1.0), epsilon);
+
+            // Max velocity
+            Assert.assertEquals(18.0, highSpeedDecelerationProfile.getPosition(2.0), epsilon);
+            Assert.assertEquals(26.0, highSpeedDecelerationProfile.getPosition(3.0), epsilon);
+
+            // Deceleration
+            Assert.assertEquals(40.0, highSpeedDecelerationProfile.getPosition(5.0), epsilon);
+            Assert.assertEquals(56.0, highSpeedDecelerationProfile.getPosition(9.0), epsilon);
+            Assert.assertEquals(58.0, highSpeedDecelerationProfile.getPosition(11.0), epsilon);
+        }
+
+        @Test
+        public void getAcceleration() {
+            // Decel to max speed
+            Assert.assertEquals(-1.0, highSpeedDecelerationProfile.getAcceleration(0.0), epsilon);
+            Assert.assertEquals(-1.0, highSpeedDecelerationProfile.getAcceleration(1.99), epsilon);
+
+            // Max velocity
+            Assert.assertEquals(0.0, highSpeedDecelerationProfile.getAcceleration(2.0), epsilon);
+            Assert.assertEquals(0.0, highSpeedDecelerationProfile.getAcceleration(2.99), epsilon);
+
+            // Deceleration
+            Assert.assertEquals(-1.0, highSpeedDecelerationProfile.getAcceleration(5.0), epsilon);
+            Assert.assertEquals(-1.0, highSpeedDecelerationProfile.getAcceleration(9.0), epsilon);
+            Assert.assertEquals(-1.0, highSpeedDecelerationProfile.getAcceleration(11.0), epsilon);
+        }
+
+        @Test
+        public void getDuration() {
+            Assert.assertEquals(11.0, highSpeedDecelerationProfile.getDuration(), epsilon);
+        }
+
+        @AfterClass
+        public static void plot() {
+            plotProfile(highSpeedDecelerationProfile, "highSpeedDecel");
         }
     }
 
@@ -466,6 +569,11 @@ public class StaticProfileTest {
             // Backtrack triangle
             Assert.assertEquals(-1.0, overshootFromMaxSpeed.getAcceleration(13.5), epsilon);
             Assert.assertEquals(1.0, overshootFromMaxSpeed.getAcceleration(18.0), epsilon);
+        }
+
+        @Test
+        public void getDuration() {
+            Assert.assertEquals(18.0, overshootFromMaxSpeed.getDuration(), epsilon);
         }
 
         @AfterClass
@@ -513,6 +621,11 @@ public class StaticProfileTest {
             Assert.assertEquals(0.0, highSpeedOvershoot.getAcceleration(60.0), epsilon);
             Assert.assertEquals(1.0, highSpeedOvershoot.getAcceleration(80.0), epsilon);
             Assert.assertEquals(1.0, highSpeedOvershoot.getAcceleration(85.0), epsilon);
+        }
+
+        @Test
+        public void getDuration() {
+            Assert.assertEquals(85.0, highSpeedOvershoot.getDuration(), epsilon);
         }
 
         @AfterClass
