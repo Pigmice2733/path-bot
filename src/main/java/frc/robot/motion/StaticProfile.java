@@ -9,7 +9,7 @@ public class StaticProfile {
 
     private final ArrayList<Chunk> chunks;
     private double maxAccel, maxDecel, maxVelocity, startingPosition;
-    public double profileDuration;
+    private double profileDuration;
 
     private class Moment {
         private final Chunk chunk;
@@ -151,6 +151,10 @@ public class StaticProfile {
 
     public double getAcceleration(double time) {
         return getMoment(time).getAcceleration();
+    }
+
+    public double getDuration() {
+        return profileDuration;
     }
 
     private Moment getMoment(double time) {

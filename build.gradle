@@ -36,7 +36,7 @@ dependencies {
     compile navx()
 
     testCompile "junit:junit:4.11"
-    testCompile group: 'jfree', name: 'jfreechart', version: '1.0.12'
+    testCompile group: 'org.jfree', name: 'jfreechart', version: '1.5.0'
 }
 
 // Place all non-test dependencies into jar, setup manifest

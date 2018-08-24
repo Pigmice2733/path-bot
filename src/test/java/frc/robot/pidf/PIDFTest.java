@@ -42,7 +42,7 @@ public class PIDFTest {
     }
 
     @Test
-    public void PositionPIDVATest() {
+    public void positionPIDVATest() {
         Gains gains = new Gains(2.0, 4.0, 0.5, 0.0, 1.0, 0.25);
         Bounds outputBounds = new Bounds(-6.0, 6.0);
         PIDF pidva = new PIDF(gains, outputBounds);
@@ -58,7 +58,7 @@ public class PIDFTest {
     }
 
     @Test
-    public void RatePIFTest() {
+    public void ratePIFTest() {
         Gains gains = new Gains(1.0, 0.25, 0.0, 1.0, 0.0, 0.0);
         Bounds outputBounds = new Bounds(-10.0, 10.0);
         PIDF pf = new PIDF(gains, outputBounds);
@@ -75,7 +75,7 @@ public class PIDFTest {
     }
 
     @Test
-    public void ContinuousPDTest() {
+    public void continuousPDTest() {
         Gains gains = new Gains(0.02, 0.0, 0.01, 0.0, 0.0, 0.0);
         Bounds outputBounds = new Bounds(-2.0, 2.0);
         PIDF pd = new PIDF(gains, outputBounds);
@@ -94,6 +94,5 @@ public class PIDFTest {
 
         pd.initialize(10.0, 0.0, 0.0);
         checkData(pd, testData);
-        // Assert.assertTrue(true);
     }
 }
