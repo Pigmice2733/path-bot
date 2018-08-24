@@ -3,7 +3,7 @@ package frc.robot.motion;
 import java.lang.Math;
 import java.util.ArrayList;
 
-import frc.robot.Utils;
+import frc.robot.utils.Utils;
 
 public class StaticProfile {
 
