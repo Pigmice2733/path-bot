@@ -3,13 +3,14 @@ package frc.robot.motion;
 import java.lang.Math;
 
 public class Chunk {
-    final private double distance, startVelocity, endVelocity, duration;
+    final private double distance, startVelocity, endVelocity, acceleration, duration;
 
     private Chunk(double distance, double startVelocity, double endVelocity, double duration) {
         this.distance = distance;
         this.startVelocity = startVelocity;
         this.endVelocity = endVelocity;
         this.duration = duration;
+        this.acceleration = (endVelocity - startVelocity) / duration;
     }
 
     public static Chunk createConstantVelocity(double velocity, double distance) {
@@ -54,7 +55,10 @@ public class Chunk {
     }
 
     public double getVelocity(double time) {
-        final double slope = (endVelocity - startVelocity) / duration;
-        return startVelocity + slope * time;
+        return startVelocity + acceleration * time;
+    }
+
+    public double getAcceleration() {
+        return acceleration;
     }
 }
