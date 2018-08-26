@@ -6,15 +6,6 @@ public class Utils {
         return percentComplete * (maxOut - minOut) + minOut;
     }
 
-    public static double clamp(double value, double min, double max) {
-        if (value < min) {
-            return min;
-        } else if (value > max) {
-            return max;
-        }
-        return value;
-    }
-
     public static boolean almostEquals(double a, double b) {
         return almostEquals(a, b, 1e-6);
     }

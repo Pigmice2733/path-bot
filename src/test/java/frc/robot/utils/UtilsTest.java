@@ -60,22 +60,4 @@ public class UtilsTest {
 
         }
     }
-
-    public static class ClampTest {
-        private static final double epsilon = 1e-6;
-
-        @Test
-        public void outside() {
-            Assert.assertEquals(0.0, Utils.clamp(-2.0, 0.0, 5.0), epsilon);
-            Assert.assertEquals(4.0, Utils.clamp(10.0, -4.0, 4.0), epsilon);
-            Assert.assertEquals(-7.0, Utils.clamp(0.0, -9.0, -7.0), epsilon);
-        }
-
-        @Test
-        public void inside() {
-            Assert.assertEquals(2.0, Utils.clamp(2.0, 0.0, 5.0), epsilon);
-            Assert.assertEquals(10.0, Utils.clamp(10.0, -4.0, 14.0), epsilon);
-            Assert.assertEquals(-8.0, Utils.clamp(-8.0, -9.0, -7.0), epsilon);
-        }
-    }
 }
