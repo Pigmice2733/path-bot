@@ -30,10 +30,17 @@ public class PIDF {
         this.previousDerivative = 0.0;
     }
 
+    /**
+     * Set this to true when your setpoint is not continuous
+     * This will switch from using derivative of the error to derivative of the input
+     */
     public void setDerivativeOnInput(boolean on) {
         this.useDerivativeOnInput = on;
     }
 
+    /**
+     * Allow error to wrap from one end of the input to another
+     */
     public void setContinuous(Bounds inputBounds, boolean continuous) {
         this.continuous = continuous;
         this.inputBounds = inputBounds;
