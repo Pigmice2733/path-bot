@@ -3,13 +3,13 @@ package frc.robot.motion;
 import java.lang.Math;
 import java.util.ArrayList;
 
-import frc.robot.Utils;
+import frc.robot.utils.Utils;
 
 public class StaticProfile {
 
     private final ArrayList<Chunk> chunks;
     private double maxAccel, maxDecel, maxVelocity, startingPosition;
-    public double profileDuration;
+    private double profileDuration;
 
     private class Moment {
         private final Chunk chunk;
@@ -20,6 +20,10 @@ public class StaticProfile {
             this.chunk = chunk;
             this.time = time;
             this.previousDistance = previousDistance;
+        }
+
+        public double getAcceleration() {
+            return chunk.getAcceleration();
         }
 
         public double getVelocity() {
@@ -145,13 +149,21 @@ public class StaticProfile {
         return getMoment(time).getPosition();
     }
 
+    public double getAcceleration(double time) {
+        return getMoment(time).getAcceleration();
+    }
+
+    public double getDuration() {
+        return profileDuration;
+    }
+
     private Moment getMoment(double time) {
         double chunkStartTime = 0.0;
         double previousDistance = startingPosition;
         // find the chunk that this time is in and return it
         for (Chunk chunk : chunks) {
             double chunkEndTime = chunkStartTime + chunk.getDuration();
-            if (time <= chunkEndTime) {
+            if (time < chunkEndTime) {
                 return new Moment(chunk, time - chunkStartTime, previousDistance);
             }
             chunkStartTime = chunkEndTime;
