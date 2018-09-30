@@ -6,9 +6,6 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install Dependencies
-          command: gradle dependencies
-      - run:
           name: Test
           command: ./gradlew test
       - store_artifacts:
