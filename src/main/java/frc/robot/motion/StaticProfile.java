@@ -12,27 +12,35 @@ public class StaticProfile {
     private double profileDuration;
 
     private class Moment {
-        private final Chunk chunk;
-        private final double time;
-        private final double previousDistance;
+        private final double acceleration, velocity, distance;
 
         public Moment(Chunk chunk, double time, double previousDistance) {
-            this.chunk = chunk;
-            this.time = time;
-            this.previousDistance = previousDistance;
+            acceleration = chunk.getAcceleration();
+            velocity = chunk.getVelocity(time);
+            distance = chunk.getPosition(time) + previousDistance;
+        }
+
+        public Moment(double acceleration, double velocity, double distance) {
+            this.acceleration = acceleration;
+            this.velocity = velocity;
+            this.distance = distance;
         }
 
         public double getAcceleration() {
-            return chunk.getAcceleration();
+            return acceleration;
         }
 
         public double getVelocity() {
-            return chunk.getVelocity(time);
+            return velocity;
         }
 
         public double getPosition() {
-            return chunk.getPosition(time) + previousDistance;
+            return distance;
         }
+    }
+
+    private Moment getEndMoment(double distance) {
+        return new Moment(0.0, 0.0, distance);
     }
 
     public StaticProfile(double currentVelocity, double currentPosition, double targetDistance, double maxVelocity,
@@ -169,11 +177,8 @@ public class StaticProfile {
             chunkStartTime = chunkEndTime;
             previousDistance += chunk.getTotalDistance();
         }
-        // time is past all the chunks, return the end of the last chunk
-        Chunk lastChunk = chunks.get(chunks.size() - 1);
-        // remove last chunk from accumulations
-        chunkStartTime = chunkStartTime - lastChunk.getDuration();
-        previousDistance = previousDistance - lastChunk.getTotalDistance();
-        return new Moment(lastChunk, time - chunkStartTime, previousDistance);
+        // time is past all the chunks, return end moment - acceleration, velocity are
+        // zero, distance is the same as the end of the profile
+        return getEndMoment(previousDistance);
     }
 }
