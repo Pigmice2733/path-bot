@@ -3,7 +3,7 @@ package frc.robot.motion;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
-import frc.robot.utils.Plot;
+import frc.robot.plot.TimePlot;
 
 public class StaticProfileTest {
 
@@ -20,9 +20,9 @@ public class StaticProfileTest {
 
     private static void plotProfile(StaticProfile profile, String name, double duration, double step) {
         if (shouldGraph()) {
-            Plot profilePlot = new Plot(name, profile::getVelocity, duration, "Velocity", step);
-            profilePlot.addSeries(profile::getPosition, "Position", step);
-            profilePlot.addSeries(profile::getAcceleration, "Acceleration", step);
+            TimePlot profilePlot = new TimePlot(name, "Velocity", profile::getVelocity, duration, step);
+            profilePlot.addSeries("Position", profile::getPosition, step);
+            profilePlot.addSeries("Acceleration", profile::getAcceleration, step);
 
             profilePlot.savePlot("./graphs/profiles/");
         }
