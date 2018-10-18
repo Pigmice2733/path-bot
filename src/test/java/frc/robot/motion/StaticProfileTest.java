@@ -3,7 +3,7 @@ package frc.robot.motion;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
-import frc.robot.plot.TimePlot;
+import frc.robot.plots.TimePlot;
 
 public class StaticProfileTest {
 

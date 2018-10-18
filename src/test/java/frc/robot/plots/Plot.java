@@ -1,4 +1,4 @@
-package frc.robot.plot;
+package frc.robot.plots;
 
 import java.awt.BasicStroke;
 import java.awt.Color;

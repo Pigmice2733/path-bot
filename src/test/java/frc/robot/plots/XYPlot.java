@@ -1,24 +1,24 @@
-package frc.robot.plot;
+package frc.robot.plots;
 
 import java.awt.Color;
+import java.util.ArrayList;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
-/**
- * XYPlot provides a simple interface to plot values over time and save as
- * charts.
- */
-public class TimePlot extends Plot {
-    private double duration;
+import frc.robot.utils.XY;
 
+/**
+ * XYPlot provides a simple interface to plot XY data and save it as charts.
+ */
+public class XYPlot extends Plot {
     /**
      * Data source for a series to plot.
      */
     public interface Data {
-        double get(double time);
+        XY get(double time);
     }
 
     /**
@@ -31,7 +31,7 @@ public class TimePlot extends Plot {
      *                   get data at)
      * @param step       Step value for time
      */
-    public TimePlot(String title, String seriesName, Data data, double duration, double step) {
+    public XYPlot(String title, String seriesName, Data data, double duration, double step) {
         this(title, seriesName, data, duration, step, getColor(0));
     }
 
@@ -46,18 +46,30 @@ public class TimePlot extends Plot {
      * @param step       Step value for time
      * @param color      The color to use for the first data series
      */
-    public TimePlot(String title, String seriesName, Data data, double duration, double step, Color color) {
+    public XYPlot(String title, String seriesName, Data data, double duration, double step, Color color) {
         this.title = title;
-        this.duration = duration;
 
         XYSeries series = createSeries(seriesName, data, duration, step);
         dataset = new XYSeriesCollection();
         dataset.addSeries(series);
 
-        chart = ChartFactory.createXYLineChart(title, "Time", "Value", dataset, PlotOrientation.VERTICAL, true, false,
-                false);
+        chart = ChartFactory.createXYLineChart(title, "X", "Y", dataset, PlotOrientation.VERTICAL, true, false, false);
 
-        initialize(color);
+        this.initialize(color);
+    }
+
+    /**
+     * Adds a new point scatter plot.
+     * 
+     * @param dataName Name of the point data series
+     * @param points   The points to plot
+     */
+    public void addPoints(String dataName, ArrayList<XY> points) {
+        XYSeries series = new XYSeries(dataName, false);
+        for (XY p : points) {
+            series.add(p.getX(), p.getY());
+        }
+        addPointSeries(series, Color.BLACK);
     }
 
     /**
@@ -69,9 +81,9 @@ public class TimePlot extends Plot {
      *                   get data at)
      * @param step       Step value for time
      */
-    public void addSeries(String seriesName, Data data, double step) {
+    public void addSeries(String seriesName, Data data, double duration, double step) {
         int seriesIndex = dataset.getSeriesCount();
-        addSeries(seriesName, data, step, getColor(seriesIndex));
+        addSeries(seriesName, data, duration, step, getColor(seriesIndex));
     }
 
     /**
@@ -79,12 +91,13 @@ public class TimePlot extends Plot {
      * 
      * @param seriesName Name of the data series
      * @param data       Data source for the series
+     * @param duration   Duration of the first data series (maximum value of time to
+     *                   get data at)
      * @param step       Step value for time
      * @param color      The color to use for the data series
      */
-    public void addSeries(String seriesName, Data data, double step, Color color) {
+    public void addSeries(String seriesName, Data data, double duration, double step, Color color) {
         XYSeries series = createSeries(seriesName, data, duration, step);
-
         addLineSeries(series, color);
     }
 
@@ -99,11 +112,11 @@ public class TimePlot extends Plot {
      * @return An XY data series
      */
     private XYSeries createSeries(String seriesName, Data data, double duration, double step) {
-        XYSeries series = new XYSeries(seriesName);
-        for (double i = 0.0; i < duration; i += step) {
-            series.add(i, data.get(i));
+        XYSeries series = new XYSeries(seriesName, false);
+        for (double i = 0.0; i <= duration; i += step) {
+            XY p = data.get(i);
+            series.add(p.getX(), p.getY());
         }
-        series.add(duration, data.get(duration));
         return series;
     }
 }
