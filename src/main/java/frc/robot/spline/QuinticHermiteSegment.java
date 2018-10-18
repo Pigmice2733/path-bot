@@ -122,12 +122,10 @@ class QuinticHermiteSegment {
     protected Point position(double s) {
         double x = 0.0;
         double y = 0.0;
-        for (int exponent = 0; exponent < xCoefs.size(); exponent++) {
-            double power = Math.pow(s, exponent);
-            x += xCoefs.get(exponent) * power;
-            y += yCoefs.get(exponent) * power;
+        for (int exponent = xCoefs.size() - 1; exponent >= 0; exponent--) {
+            x = x * s + xCoefs.get(exponent);
+            y = y * s + yCoefs.get(exponent);
         }
-
         return new Point(x, y);
     }
 
@@ -141,12 +139,10 @@ class QuinticHermiteSegment {
     protected Vector derivative(double s) {
         double x = 0.0;
         double y = 0.0;
-        for (int exponent = 1; exponent < xCoefs.size(); exponent++) {
-            double power = exponent * Math.pow(s, exponent - 1);
-            x += xCoefs.get(exponent) * power;
-            y += yCoefs.get(exponent) * power;
+        for (int exponent = xCoefs.size() - 1; exponent >= 1; exponent--) {
+            x = x * s + exponent * xCoefs.get(exponent);
+            y = y * s + exponent * yCoefs.get(exponent);
         }
-
         return new Vector(x, y);
     }
 
@@ -160,10 +156,9 @@ class QuinticHermiteSegment {
     protected Vector secondDerivative(double s) {
         double x = 0.0;
         double y = 0.0;
-        for (int exponent = 2; exponent < xCoefs.size(); exponent++) {
-            double power = exponent * (exponent - 1) * Math.pow(s, exponent - 2);
-            x += xCoefs.get(exponent) * power;
-            y += yCoefs.get(exponent) * power;
+        for (int exponent = xCoefs.size() - 1; exponent >= 2; exponent--) {
+            x = x * s + exponent * (exponent - 1) * xCoefs.get(exponent);
+            y = y * s + exponent * (exponent - 1) * yCoefs.get(exponent);
         }
 
         return new Vector(x, y);
