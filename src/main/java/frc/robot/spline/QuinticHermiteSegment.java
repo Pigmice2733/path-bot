@@ -1,5 +1,7 @@
 package frc.robot.spline;
 
+import java.util.ArrayList;
+
 import frc.robot.utils.Point;
 import frc.robot.utils.Vector;
 
@@ -7,6 +9,9 @@ import frc.robot.utils.Vector;
  * A single segment of a quintic Hermite spline.
  */
 class QuinticHermiteSegment {
+    ArrayList<Double> xCoefs;
+    ArrayList<Double> yCoefs;
+
     Point start, end;
     Vector startDerivative, endDerivative;
     Vector startSecondDerivative, endSecondDerivative;
@@ -23,14 +28,45 @@ class QuinticHermiteSegment {
      *                              segment
      * @param endSecondDerivative   The second derivative at the end of the segment
      */
-    QuinticHermiteSegment(Point start, Point end, Vector startDerivative, Vector endDerivative,
+    protected QuinticHermiteSegment(Point start, Point end, Vector startDerivative, Vector endDerivative,
             Vector startSecondDerivative, Vector endSecondDerivative) {
+
         this.start = start;
         this.end = end;
         this.startDerivative = startDerivative;
         this.endDerivative = endDerivative;
         this.startSecondDerivative = startSecondDerivative;
         this.endSecondDerivative = endSecondDerivative;
+
+        xCoefs = new ArrayList<>();
+        yCoefs = new ArrayList<>();
+
+        calculateCoefficients();
+    }
+
+    /**
+     * Calculates coefficients for spline polynomials.
+     */
+    private void calculateCoefficients() {
+        xCoefs.add(start.getX());
+        xCoefs.add(startDerivative.getX());
+        xCoefs.add(0.5 * startSecondDerivative.getX());
+        xCoefs.add(-10 * start.getX() + 10 * end.getX() - 6 * startDerivative.getX() - 4 * endDerivative.getX()
+                - 1.5 * startSecondDerivative.getX() + 0.5 * endSecondDerivative.getX());
+        xCoefs.add(15 * start.getX() - 15 * end.getX() + 8 * startDerivative.getX() + 7 * endDerivative.getX()
+                + 1.5 * startSecondDerivative.getX() - endSecondDerivative.getX());
+        xCoefs.add(-6 * start.getX() + 6 * end.getX() - 3 * startDerivative.getX() - 3 * endDerivative.getX()
+                - 0.5 * startSecondDerivative.getX() + 0.5 * endSecondDerivative.getX());
+
+        yCoefs.add(start.getY());
+        yCoefs.add(startDerivative.getY());
+        yCoefs.add(0.5 * startSecondDerivative.getY());
+        yCoefs.add(-10 * start.getY() + 10 * end.getY() - 6 * startDerivative.getY() - 4 * endDerivative.getY()
+                - 1.5 * startSecondDerivative.getY() + 0.5 * endSecondDerivative.getY());
+        yCoefs.add(15 * start.getY() - 15 * end.getY() + 8 * startDerivative.getY() + 7 * endDerivative.getY()
+                + 1.5 * startSecondDerivative.getY() - endSecondDerivative.getY());
+        yCoefs.add(-6 * start.getY() + 6 * end.getY() - 3 * startDerivative.getY() - 3 * endDerivative.getY()
+                - 0.5 * startSecondDerivative.getY() + 0.5 * endSecondDerivative.getY());
     }
 
     /**
@@ -43,7 +79,7 @@ class QuinticHermiteSegment {
      * @return The point representing where the robot's wheel would be if it
      *         followed the spline perfectly
      */
-    Point getWheel(double s, double wheelX, double wheelY) {
+    protected Point getWheel(double s, double wheelX, double wheelY) {
         Point robotCenter = position(s);
         Vector derivative = derivative(s);
 
@@ -61,7 +97,7 @@ class QuinticHermiteSegment {
      * 
      * @return Arc length of this segment
      */
-    double arcLength() {
+    protected double arcLength() {
         double chordLength = end.subtract(start).getMagnitude();
         int iterations = (int) (100.0 * chordLength);
 
@@ -83,24 +119,14 @@ class QuinticHermiteSegment {
      * @param s The parameter value to find the position at
      * @return The point on the spline at the specified parameter value
      */
-    Point position(double s) {
-        // Quintic Hermite spline derivative coefficients
-        double pointStartCoef = 1 - 10 * Math.pow(s, 3) + 15 * Math.pow(s, 4) - 6 * Math.pow(s, 5);
-        double pointEndCoef = 10 * Math.pow(s, 3) - 15 * Math.pow(s, 4) + 6 * Math.pow(s, 5);
-        double derivativeStartCoef = s - 6 * Math.pow(s, 3) + 8 * Math.pow(s, 4) - 3 * Math.pow(s, 5);
-        double derivativeEndCoef = -4 * Math.pow(s, 3) + 7 * Math.pow(s, 4) - 3 * Math.pow(s, 5);
-        double secondDerivativeStartCoef = 0.5 * Math.pow(s, 2) - 1.5 * Math.pow(s, 3) + 1.5 * Math.pow(s, 4)
-                - 0.5 * Math.pow(s, 5);
-        double secondDerivativeEndCoef = 0.5 * Math.pow(s, 3) - Math.pow(s, 4) + 0.5 * Math.pow(s, 5);
-
-        double x = pointStartCoef * start.getX() + pointEndCoef * end.getX()
-                + derivativeStartCoef * startDerivative.getX() + derivativeEndCoef * endDerivative.getX()
-                + secondDerivativeStartCoef * startSecondDerivative.getX()
-                + secondDerivativeEndCoef * endSecondDerivative.getX();
-        double y = pointStartCoef * start.getY() + pointEndCoef * end.getY()
-                + derivativeStartCoef * startDerivative.getY() + derivativeEndCoef * endDerivative.getY()
-                + secondDerivativeStartCoef * startSecondDerivative.getY()
-                + secondDerivativeEndCoef * endSecondDerivative.getY();
+    protected Point position(double s) {
+        double x = 0.0;
+        double y = 0.0;
+        for (int exponent = 0; exponent < xCoefs.size(); exponent++) {
+            double power = Math.pow(s, exponent);
+            x += xCoefs.get(exponent) * power;
+            y += yCoefs.get(exponent) * power;
+        }
 
         return new Point(x, y);
     }
@@ -112,22 +138,16 @@ class QuinticHermiteSegment {
      * @param s The parameter value to find the derivative at
      * @return The derivative as a vector
      */
-    Vector derivative(double s) {
-        // Quintic Hermite spline derivative coefficients
-        double pointCoef = -30 * Math.pow(s, 2) + 60 * Math.pow(s, 3) - 30 * Math.pow(s, 4);
-        double derivativeStartCoef = 1 - 18 * Math.pow(s, 2) + 32 * Math.pow(s, 3) - 15 * Math.pow(s, 4);
-        double derivativeEndCoef = -12 * Math.pow(s, 2) + 28 * Math.pow(s, 3) - 15 * Math.pow(s, 4);
-        double secondDerivativeStartCoef = s - 4.5 * Math.pow(s, 2) + 6 * Math.pow(s, 3) - 2.5 * Math.pow(s, 4);
-        double secondDerivativeEndCoef = 1.5 * Math.pow(s, 2) - 4 * Math.pow(s, 3) + 2.5 * Math.pow(s, 4);
+    protected Vector derivative(double s) {
+        double x = 0.0;
+        double y = 0.0;
+        for (int exponent = 1; exponent < xCoefs.size(); exponent++) {
+            double power = exponent * Math.pow(s, exponent - 1);
+            x += xCoefs.get(exponent) * power;
+            y += yCoefs.get(exponent) * power;
+        }
 
-        double dx = pointCoef * start.getX() + (-pointCoef) * end.getX() + derivativeStartCoef * startDerivative.getX()
-                + derivativeEndCoef * endDerivative.getX() + secondDerivativeStartCoef * startSecondDerivative.getX()
-                + secondDerivativeEndCoef * endSecondDerivative.getX();
-        double dy = pointCoef * start.getY() + (-pointCoef) * end.getY() + derivativeStartCoef * startDerivative.getY()
-                + derivativeEndCoef * endDerivative.getY() + secondDerivativeStartCoef * startSecondDerivative.getY()
-                + secondDerivativeEndCoef * endSecondDerivative.getY();
-
-        return new Vector(dx, dy);
+        return new Vector(x, y);
     }
 
     /**
@@ -137,49 +157,16 @@ class QuinticHermiteSegment {
      * @param s The parameter value to find the second derivative at
      * @return The second derivative as a vector
      */
-    Vector secondDerivative(double s) {
-        // Quintic Hermite spline derivative coefficients
-        double pointCoef = -60 * s + 180 * Math.pow(s, 2) - 120 * Math.pow(s, 3);
-        double derivativeStartCoef = -36 * s + 96 * Math.pow(s, 2) - 60 * Math.pow(s, 3);
-        double derivativeEndCoef = -24 * s + 84 * Math.pow(s, 2) - 60 * Math.pow(s, 3);
-        double secondDerivativeStartCoef = 1 - 9 * s + 18 * Math.pow(s, 2) - 10 * Math.pow(s, 3);
-        double secondDerivativeEndCoef = 3 * s + 12 * Math.pow(s, 2) + 10 * Math.pow(s, 3);
+    protected Vector secondDerivative(double s) {
+        double x = 0.0;
+        double y = 0.0;
+        for (int exponent = 2; exponent < xCoefs.size(); exponent++) {
+            double power = exponent * (exponent - 1) * Math.pow(s, exponent - 2);
+            x += xCoefs.get(exponent) * power;
+            y += yCoefs.get(exponent) * power;
+        }
 
-        double ddx = pointCoef * start.getX() + (-pointCoef) * end.getX() + derivativeStartCoef * startDerivative.getX()
-                + derivativeEndCoef * endDerivative.getX() + secondDerivativeStartCoef * startSecondDerivative.getX()
-                + secondDerivativeEndCoef * endSecondDerivative.getX();
-        double ddy = pointCoef * start.getY() + (-pointCoef) * end.getY() + derivativeStartCoef * startDerivative.getY()
-                + derivativeEndCoef * endDerivative.getY() + secondDerivativeStartCoef * startSecondDerivative.getY()
-                + secondDerivativeEndCoef * endSecondDerivative.getY();
-
-        return new Vector(ddx, ddy);
-    }
-
-    /**
-     * Calculates the third derivative of this segment at the specified local
-     * parameter variable value.
-     * 
-     * @param s The parameter value to find the third derivative at
-     * @return The third derivative as a vector
-     */
-    Vector thirdDerivative(double s) {
-        // Quintic Hermite spline derivative coefficients
-        double pointCoef = -60 + 360 * s - 360 * Math.pow(s, 2);
-        double derivativeStartCoef = -36 + 192 * s - 180 * Math.pow(s, 2);
-        double derivativeEndCoef = -24 + 168 * s - 180 * Math.pow(s, 2);
-        double secondDerivativeStartCoef = -9 + 36 * s - 30 * Math.pow(s, 2);
-        double secondDerivativeEndCoef = 3 + 24 * s + 30 * Math.pow(s, 2);
-
-        double dddx = pointCoef * start.getX() + (-pointCoef) * end.getX()
-                + derivativeStartCoef * startDerivative.getX() + derivativeEndCoef * endDerivative.getX()
-                + secondDerivativeStartCoef * startSecondDerivative.getX()
-                + secondDerivativeEndCoef * endSecondDerivative.getX();
-        double dddy = pointCoef * start.getY() + (-pointCoef) * end.getY()
-                + derivativeStartCoef * startDerivative.getY() + derivativeEndCoef * endDerivative.getY()
-                + secondDerivativeStartCoef * startSecondDerivative.getY()
-                + secondDerivativeEndCoef * endSecondDerivative.getY();
-
-        return new Vector(dddx, dddy);
+        return new Vector(x, y);
     }
 
     /**
@@ -189,7 +176,7 @@ class QuinticHermiteSegment {
      * @param s The value of the local parameter variable to find the curvature at
      * @return The unsigned curvature
      */
-    double curvature(double s) {
+    protected double curvature(double s) {
         Vector first = derivative(s);
         Vector second = secondDerivative(s);
 
