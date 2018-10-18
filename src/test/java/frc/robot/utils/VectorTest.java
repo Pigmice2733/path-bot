@@ -15,6 +15,37 @@ public class VectorTest {
     }
 
     @Test
+    public void equalsTest() {
+        Vector one = new Vector(5.3, 6.0);
+        Point point = new Point(5.3, 6.0);
+        Vector two = new Vector(5.3000000000001, 5.99999999999999999);
+        Vector three = new Vector(5.2, 6.0);
+        Vector four = new Vector(5.3, -6.0);
+
+        Assert.assertFalse(one.equals(null));
+        Assert.assertFalse(one.equals(point));
+        Assert.assertTrue(one.equals(one));
+        Assert.assertTrue(one.equals(two));
+
+        Assert.assertFalse(one.equals(three));
+        Assert.assertFalse(one.equals(four));
+        Assert.assertFalse(three.equals(four));
+    }
+
+    @Test
+    public void hashCodeTest() {
+        Vector one = new Vector(5.3, 6.0);
+        Vector two = new Vector(5.6, 6.0);
+
+        int codeOne = one.hashCode();
+        int codeTwo = one.hashCode();
+        int codeThree = two.hashCode();
+
+        Assert.assertEquals(codeOne, codeTwo);
+        Assert.assertNotEquals(codeOne, codeThree);
+    }
+
+    @Test
     public void zeroTest() {
         Vector zero = Vector.zero();
         Assert.assertEquals(0.0, zero.getX(), epsilon);

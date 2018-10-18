@@ -45,6 +45,23 @@ public class Point implements XY {
         return y;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if ((o == null) || (o.getClass() != this.getClass())) {
+            return false;
+        }
+        Point other = (Point) o;
+        return Utils.almostEquals(x, other.x) && Utils.almostEquals(y, other.y);
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) (7.0 + 3.0 * x + 227.0 * y);
+    }
+
     /**
      * Translates this point by a vector.
      * 

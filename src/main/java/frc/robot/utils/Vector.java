@@ -45,6 +45,23 @@ public class Vector implements XY {
         return y;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if ((o == null) || (o.getClass() != this.getClass())) {
+            return false;
+        }
+        Vector other = (Vector) o;
+        return Utils.almostEquals(x, other.x) && Utils.almostEquals(y, other.y);
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) (3.0 + 11.0 * x + 193.0 * y);
+    }
+
     /**
      * Scales the vector by a scalar factor.
      * 
