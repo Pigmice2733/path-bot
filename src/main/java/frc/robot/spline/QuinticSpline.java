@@ -11,13 +11,36 @@ import frc.robot.utils.Vector;
  * manipulkate and modify the spline but slower to compute points and
  * derivatives along the spline.
  */
-public class QuinticHermite {
+public class QuinticSpline {
     ArrayList<Double> knots;
-    ArrayList<QuinticHermiteSegment> segments;
+    ArrayList<QuinticSplineSegment> segments;
 
     /**
-     * Constructs a quintic Hermite spline from a set of knots, points,
-     * derivatives,
+     * Stores the curvature at the end of each of a series of chunks along a spline
+     * segment, as well as how much arc length was left over at the end of a
+     * segment.
+     */
+    protected static class CurvatureChunks {
+        private ArrayList<Double> curvatureChunks;
+        private double remainingArcLength;
+
+        /**
+         * Creates a new CurvatureChunks given the curvature chunks, and the remaining
+         * arc length from the segment that was not included as one of the chunks.
+         * 
+         * @param curvatureChunks    An array of signed curvature values at the end of
+         *                           each chunk
+         * @param remainingArcLength The amount of remaining arc length that was not
+         *                           counted as part of a chunk
+         */
+        protected CurvatureChunks(ArrayList<Double> curvatureChunks, double remainingArcLength) {
+            this.curvatureChunks = curvatureChunks;
+            this.remainingArcLength = remainingArcLength;
+        }
+    }
+
+    /**
+     * Constructs a quintic Hermite spline from a set of knots, points, derivatives,
      * and second derivatives.
      *
      * @param knots             The knots to use for the spline
@@ -25,7 +48,7 @@ public class QuinticHermite {
      * @param derivatives       The derivaties to interpoate at the knots
      * @param secondDerivatives The second derivatives to interpoate at the knots
      */
-    public QuinticHermite(ArrayList<Double> knots, ArrayList<Point> points, ArrayList<Vector> derivatives,
+    public QuinticSpline(ArrayList<Double> knots, ArrayList<Point> points, ArrayList<Vector> derivatives,
             ArrayList<Vector> secondDerivatives) {
         this.knots = knots;
         this.segments = new ArrayList<>();
@@ -37,15 +60,14 @@ public class QuinticHermite {
             Vector startSecondDerivative = secondDerivatives.get(i).scale(knotLength);
             Vector endSecondDerivative = secondDerivatives.get(i + 1).scale(knotLength);
 
-            QuinticHermiteSegment segment = new QuinticHermiteSegment(points.get(i), points.get(i + 1), startDerivative,
+            QuinticSplineSegment segment = new QuinticSplineSegment(points.get(i), points.get(i + 1), startDerivative,
                     endDerivative, startSecondDerivative, endSecondDerivative);
             segments.add(segment);
         }
     }
 
     /**
-     * Calculates the position of a robot's wheel at the specified global
-     * parameter
+     * Calculates the position of a robot's wheel at the specified global parameter
      * value as it drives along this spline.
      *
      * @param t      The global paramter value to find the wheel position at
@@ -67,11 +89,11 @@ public class QuinticHermite {
      * @param t The value of the global parameter to get the point at
      * @return The point at the parameter value
      */
-    public Point getPoint(double t) {
+    public Point getPosition(double t) {
         int i = getSegmentIndex(t);
         // Transform from global parameter to local
         double s = globalToLocal(i, t);
-        return segments.get(i).position(s);
+        return segments.get(i).getPosition(s);
     }
 
     /**
@@ -87,7 +109,7 @@ public class QuinticHermite {
         double knotLength = knots.get(i + 1) - knots.get(i);
         // Get derivative with repsect to local parameter and scale so it is with
         // respect to the global parameter
-        return segments.get(i).derivative(s).scale(1.0 / knotLength);
+        return segments.get(i).getDerivative(s).scale(1.0 / knotLength);
     }
 
     /**
@@ -104,17 +126,54 @@ public class QuinticHermite {
         double knotLength = knots.get(i + 1) - knots.get(i);
         // Get second derivative with repsect to local parameter and scale so it is with
         // respect to the global parameter
-        return segments.get(i).secondDerivative(s).scale(1.0 / knotLength);
+        return segments.get(i).getSecondDerivative(s).scale(1.0 / knotLength);
     }
 
     /**
-     * Gets the arc length of this spline. This is the same as the maximum
-     * parameter value of this spline.
+     * Gets the point on this spline at the specified global paramter value.
      *
-     * @return The full arc length of this spline
+     * @param t The value of the global parameter to get the point at
+     * @return The point at the parameter value
+     */
+    public double getCurvature(double t) {
+        int i = getSegmentIndex(t);
+        // Transform from global parameter to local
+        double s = globalToLocal(i, t);
+        return segments.get(i).getCurvature(s);
+    }
+
+    /**
+     * Gets the knot length of this spline. This is the maximum parameter value of
+     * this spline.
+     *
+     * @return The last knot of this spline
      */
     public double getLength() {
         return knots.get(knots.size() - 1);
+    }
+
+    /**
+     * Computes the curvature at the boundaries a series of chunks of uniform length
+     * along the spline. Knowing the curvature of the spline at a series of points
+     * along it allows the creation of motion profiles to efficiently follow to
+     * spline.
+     * 
+     * @param chunkLength The length each chunk should be
+     * @return An array of the curvatures at the end of each chunk
+     */
+    public ArrayList<Double> computeCurvatureChunks(double chunkLength) {
+        ArrayList<Double> curvatureSegments = new ArrayList<>();
+
+        curvatureSegments.add(segments.get(0).getCurvature(0.0));
+
+        double initialArcLength = 0.0;
+        for (QuinticSplineSegment segment : segments) {
+            CurvatureChunks chunks = segment.getCurvatureChunks(chunkLength, initialArcLength);
+            initialArcLength = chunks.remainingArcLength;
+            curvatureSegments.addAll(chunks.curvatureChunks);
+        }
+
+        return curvatureSegments;
     }
 
     /**
@@ -128,8 +187,7 @@ public class QuinticHermite {
     }
 
     /**
-     * Finds the index of the segment that the global parameter value
-     * <code>t</code>
+     * Finds the index of the segment that the global parameter value <code>t</code>
      * falls within.
      *
      * @param t Global parameter variable value to find the segment of

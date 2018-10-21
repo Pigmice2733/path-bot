@@ -8,13 +8,15 @@ import frc.robot.utils.Vector;
 /**
  * A single segment of a quintic Hermite spline.
  */
-class QuinticHermiteSegment {
-    ArrayList<Double> xCoefs;
-    ArrayList<Double> yCoefs;
-
+class QuinticSplineSegment {
     Point start, end;
     Vector startDerivative, endDerivative;
     Vector startSecondDerivative, endSecondDerivative;
+
+    private ArrayList<Double> xCoefs;
+    private ArrayList<Double> yCoefs;
+
+    private double arcLength;
 
     /**
      * Constructs a quintic Hermite spline segment.
@@ -28,7 +30,7 @@ class QuinticHermiteSegment {
      *                              segment
      * @param endSecondDerivative   The second derivative at the end of the segment
      */
-    protected QuinticHermiteSegment(Point start, Point end, Vector startDerivative, Vector endDerivative,
+    protected QuinticSplineSegment(Point start, Point end, Vector startDerivative, Vector endDerivative,
             Vector startSecondDerivative, Vector endSecondDerivative) {
 
         this.start = start;
@@ -42,10 +44,13 @@ class QuinticHermiteSegment {
         yCoefs = new ArrayList<>();
 
         calculateCoefficients();
+
+        arcLength = calculateArcLength();
+        System.out.println(arcLength);
     }
 
     /**
-     * Calculates coefficients for spline polynomials.
+     * Calculates coefficients for x and y quintic polynomials.
      */
     private void calculateCoefficients() {
         xCoefs.add(start.getX());
@@ -80,8 +85,8 @@ class QuinticHermiteSegment {
      *         followed the spline perfectly
      */
     protected Point getWheel(double s, double wheelX, double wheelY) {
-        Point robotCenter = position(s);
-        Vector derivative = derivative(s);
+        Point robotCenter = getPosition(s);
+        Vector derivative = getDerivative(s);
 
         // Wheel offsets are for when robot is turned to PI/2 so the rotation needs to
         // take that into account.
@@ -92,24 +97,66 @@ class QuinticHermiteSegment {
     }
 
     /**
-     * Calculates the arc
-     * length of this spline segment using numerical integration.
+     * Gets the arc length of this spline segment.
      * 
      * @return Arc length of this segment
      */
-    protected double arcLength() {
+    protected double getArcLength() {
+        return arcLength;
+    }
+
+    /**
+     * Calculates the arc length of this spline segment using numerical integration.
+     * 
+     * @return Arc length of this segment
+     */
+    private double calculateArcLength() {
         double chordLength = end.subtract(start).getMagnitude();
-        int iterations = (int) (100.0 * chordLength);
+        int iterations = (int) (200.0 * chordLength);
 
         double arcLength = 0.0;
-        double stepSize = 1.0 / iterations;
+        Point previousPoint = start;
 
         for (int i = 0; i <= iterations; i++) {
-            double s = i / iterations;
-            arcLength += stepSize * derivative(s).getMagnitude();
+            double s = (float) i / (float) iterations;
+            Point currentPoint = getPosition(s);
+            double delta = currentPoint.subtract(previousPoint).getMagnitude();
+            previousPoint = currentPoint;
+            arcLength += delta;
         }
 
         return arcLength;
+    }
+
+    /**
+     * Computes the curvature at the boundaries a series of chunks of uniform length
+     * along the spline segment.
+     * 
+     * @param chunkLength      The length each chunk should be
+     * @param initialArcLength Arc length value to starting measuring the chunks out
+     *                         from at the start of the spline
+     * @return An object containing an array of the curvatures at the end of each
+     *         chunk, and the extra arc length that was not counted as part of a
+     *         full chunk
+     */
+    protected QuinticSpline.CurvatureChunks getCurvatureChunks(double chunkLength, double initialArcLength) {
+        ArrayList<Double> curvatureSegments = new ArrayList<>();
+
+        double currentArcLength = initialArcLength;
+        double arcLengthOfPreviousChunk = 0.0;
+        double stepSize = chunkLength / (100.0 * arcLength);
+        double s = 0.0;
+
+        while (s <= 1.0) {
+            currentArcLength += stepSize * getDerivative(s).getMagnitude();
+            if ((currentArcLength - arcLengthOfPreviousChunk) > chunkLength) {
+                arcLengthOfPreviousChunk = currentArcLength;
+                curvatureSegments.add(getCurvature(s));
+            }
+            s += stepSize;
+        }
+
+        return new QuinticSpline.CurvatureChunks(curvatureSegments, currentArcLength - arcLengthOfPreviousChunk);
     }
 
     /**
@@ -119,7 +166,7 @@ class QuinticHermiteSegment {
      * @param s The parameter value to find the position at
      * @return The point on the spline at the specified parameter value
      */
-    protected Point position(double s) {
+    protected Point getPosition(double s) {
         double x = 0.0;
         double y = 0.0;
         for (int exponent = xCoefs.size() - 1; exponent >= 0; exponent--) {
@@ -136,7 +183,7 @@ class QuinticHermiteSegment {
      * @param s The parameter value to find the derivative at
      * @return The derivative as a vector
      */
-    protected Vector derivative(double s) {
+    protected Vector getDerivative(double s) {
         double x = 0.0;
         double y = 0.0;
         for (int exponent = xCoefs.size() - 1; exponent >= 1; exponent--) {
@@ -153,7 +200,7 @@ class QuinticHermiteSegment {
      * @param s The parameter value to find the second derivative at
      * @return The second derivative as a vector
      */
-    protected Vector secondDerivative(double s) {
+    protected Vector getSecondDerivative(double s) {
         double x = 0.0;
         double y = 0.0;
         for (int exponent = xCoefs.size() - 1; exponent >= 2; exponent--) {
@@ -165,17 +212,17 @@ class QuinticHermiteSegment {
     }
 
     /**
-     * Calculates the unsigned curvature of this segment at the specified local
+     * Calculates the signed curvature of this segment at the specified local
      * parameter variable value.
      * 
      * @param s The value of the local parameter variable to find the curvature at
-     * @return The unsigned curvature
+     * @return The signed curvature
      */
-    protected double curvature(double s) {
-        Vector first = derivative(s);
-        Vector second = secondDerivative(s);
+    protected double getCurvature(double s) {
+        Vector first = getDerivative(s);
+        Vector second = getSecondDerivative(s);
 
-        double dividend = Math.abs(first.getX() * second.getY() - first.getY() * second.getX());
+        double dividend = first.getX() * second.getY() - first.getY() * second.getX();
         double divisor = Math.pow(first.getX() * first.getX() + first.getY() * first.getY(), 1.5);
 
         return dividend / divisor;
