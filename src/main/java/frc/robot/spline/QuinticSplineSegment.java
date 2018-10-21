@@ -46,7 +46,6 @@ class QuinticSplineSegment {
         calculateCoefficients();
 
         arcLength = calculateArcLength();
-        System.out.println(arcLength);
     }
 
     /**

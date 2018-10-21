@@ -2,7 +2,7 @@ package frc.robot.motion;
 
 import java.lang.Math;
 
-public class Chunk {
+class Chunk {
     final private double distance, startVelocity, endVelocity, acceleration, duration;
 
     private Chunk(double distance, double startVelocity, double endVelocity, double duration) {
@@ -13,14 +13,20 @@ public class Chunk {
         this.acceleration = (endVelocity - startVelocity) / duration;
     }
 
-    public static Chunk createConstantVelocity(double velocity, double distance) {
+    protected static Chunk createVelocityDistance(double distance, double startVelocity, double endVelocity) {
+        double averageVelocity = (startVelocity + endVelocity) / 2.0;
+        double duration = distance / averageVelocity;
+        return new Chunk(distance, startVelocity, endVelocity, duration);
+    }
+
+    protected static Chunk createConstantVelocity(double velocity, double distance) {
         double duration = distance / velocity;
         return new Chunk(distance, velocity, velocity, duration);
     }
 
-    public static Chunk createVelocityTransition(double startVelocity, double endVelocity, double maxAccel,
+    protected static Chunk createVelocityTransition(double startVelocity, double endVelocity, double maxAccel,
             double maxDecel) {
-        final double averageVelocity = (startVelocity + endVelocity) / 2;
+        final double averageVelocity = (startVelocity + endVelocity) / 2.0;
         final double deltaVelocity = (endVelocity - startVelocity);
 
         double duration, distance;
@@ -36,29 +42,33 @@ public class Chunk {
         return new Chunk(distance, startVelocity, endVelocity, duration);
     }
 
-    public double getDuration() {
+    protected Setpoint getSetpoint(double time) {
+        return new Setpoint(getPosition(time), getVelocity(time), acceleration);
+    }
+
+    protected double getDuration() {
         return duration;
     }
 
-    public double getTotalDistance() {
+    protected double getTotalDistance() {
         return distance;
     }
 
-    public double getEndVelocity() {
+    protected double getEndVelocity() {
         return endVelocity;
     }
 
-    public double getPosition(double time) {
+    protected double getPosition(double time) {
         final double currentVelocity = getVelocity(time);
-        final double averageVelocity = (startVelocity + currentVelocity) / 2;
+        final double averageVelocity = (startVelocity + currentVelocity) / 2.0;
         return averageVelocity * time;
     }
 
-    public double getVelocity(double time) {
+    protected double getVelocity(double time) {
         return startVelocity + acceleration * time;
     }
 
-    public double getAcceleration() {
+    protected double getAcceleration() {
         return acceleration;
     }
 }
