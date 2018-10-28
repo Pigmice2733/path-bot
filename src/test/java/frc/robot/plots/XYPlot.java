@@ -8,6 +8,7 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
+import frc.robot.utils.Point;
 import frc.robot.utils.XY;
 
 /**
@@ -64,7 +65,7 @@ public class XYPlot extends Plot {
      * @param dataName Name of the point data series
      * @param points   The points to plot
      */
-    public void addPoints(String dataName, ArrayList<XY> points) {
+    public void addPoints(String dataName, ArrayList<Point> points) {
         XYSeries series = new XYSeries(dataName, false);
         for (XY p : points) {
             series.add(p.getX(), p.getY());

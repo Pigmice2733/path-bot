@@ -77,21 +77,20 @@ class QuinticSplineSegment {
      * Calculates the position of a robot's wheel at the specified local parameter
      * variable value as it drives along this segment.
      * 
-     * @param s      The local paramter value to find the wheel position at
-     * @param wheelX The x offset of the wheel from the center of the robot
-     * @param wheelY The y offset of the wheel from the center of the robot
+     * @param s           The local paramter value to find the wheel position at
+     * @param wheelWidth  The width offset of the wheel from the center of the robot
+     * @param wheelLength The length offset of the wheel from the center of the
+     *                    robot
      * @return The point representing where the robot's wheel would be if it
      *         followed the spline perfectly
      */
-    protected Point getWheel(double s, double wheelX, double wheelY) {
+    protected Point getWheel(double s, double wheelWidth, double wheelLength) {
         Point robotCenter = getPosition(s);
         Vector derivative = getDerivative(s);
 
-        // Wheel offsets are for when robot is turned to PI/2 so the rotation needs to
-        // take that into account.
-        double rotation = derivative.getAngle() - 0.5 * Math.PI;
+        double rotation = derivative.getAngle();
 
-        Vector wheelOffset = new Vector(wheelX, wheelY).rotate(rotation);
+        Vector wheelOffset = new Vector(wheelLength, -wheelWidth).rotate(rotation);
         return robotCenter.translate(wheelOffset);
     }
 

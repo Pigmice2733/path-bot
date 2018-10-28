@@ -8,7 +8,7 @@ import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
 /**
- * XYPlot provides a simple interface to plot values over time and save as
+ * TimePlot provides a simple interface to plot values over time and save as
  * charts.
  */
 public class TimePlot extends Plot {

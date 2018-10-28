@@ -7,12 +7,23 @@ import frc.robot.utils.Bounds;
 import frc.robot.utils.Utils;
 
 public class SplineProfile {
-    private ArrayList<Double> velocities;
-    private ArrayList<Double> times;
+    public ArrayList<Double> velocities;
+    public ArrayList<Double> times;
     private double trackWidth;
     private double maxWheelVelocity;
     private double chunkLength;
 
+    /**
+     * Constructs a SplineProfile to efficiently guide a robot along a QuinticSpline
+     * path.
+     * 
+     * @param spline           QuinticSpline path
+     * @param chunkLength      Distance along path to make each chunk - smaller
+     *                         means higher resolution
+     * @param maxWheelVelocity Maximum velocity of the drivetrain in a straight line
+     * @param maxAcceleration  Robot's maximum acceleration/deceleration
+     * @param trackWidth       Track width of the robot's drivetrain
+     */
     public SplineProfile(QuinticSpline spline, double chunkLength, double maxWheelVelocity, double maxAcceleration,
             double trackWidth) {
         ArrayList<Double> curvatureChunks = spline.computeCurvatureChunks(chunkLength);
@@ -30,12 +41,15 @@ public class SplineProfile {
         // Iterate over list forwards and calculate maximum velocities possible based on
         // path curvature, and the robot's acceleration limit.
         for (int i = 1; i < curvatureChunks.size(); i++) {
-            double maxVelocity = maxVelocityFromCurvature(curvatureChunks.get(i));
+            double initialVelocity = velocities.get(i - 1);
+            double curvatureVelocityLimit = maxVelocityFromCurvature(curvatureChunks.get(i));
             // The maximum velocity is the minimum of the maximum velocity possible based on
             // the path curvature, and the maximum velocity attainable if the robot
             // accelerated across the entire previous chunk.
-            maxVelocity = Math.min(maxVelocity, velocities.get(i - 1) + Math.sqrt(chunkLength * maxAcceleration));
-            velocities.set(i, maxVelocity);
+            double velocityChangeLimit = Math
+                    .sqrt(initialVelocity * initialVelocity + 2 * maxAcceleration * chunkLength);
+            double maxVelocity = Math.min(curvatureVelocityLimit, velocityChangeLimit);
+            velocities.add(maxVelocity);
         }
 
         // Spline profile end with velocity 0.0
@@ -44,24 +58,34 @@ public class SplineProfile {
         // Iterate over list backwards and calculate maximum velocities possible based
         // on the robot's acceleration limit, and the limits calculated during the
         // forward pass.
-        for (int i = curvatureChunks.size() - 2; i >= 0; i--) {
+        for (int i = curvatureChunks.size() - 1; i >= 0; i--) {
             // The maximum velocity is the minimum of the maximum velocity calcuated the
             // first time through, and the maximum velocity the robot can have and still
             // have enoguh time to decelerate to stay within the velocity limit of the next
             // chunk.
+            double initialVelocity = velocities.get(i + 1);
             double maxVelocity = Math.min(velocities.get(i),
-                    velocities.get(i + 1) + Math.sqrt(chunkLength * maxAcceleration));
+                    Math.sqrt(initialVelocity * initialVelocity + 2 * maxAcceleration * chunkLength));
             velocities.set(i, maxVelocity);
         }
 
         // Time starts at 0.0
-        times.add(0.0);
+        double time = 0.0;
+        times.add(time);
         for (int i = 0; i < velocities.size() - 1; i++) {
             double averageVelocity = (velocities.get(i + 1) + velocities.get(i)) / 2.0;
-            times.add(chunkLength / averageVelocity);
+            time += chunkLength / averageVelocity;
+            times.add(time);
         }
     }
 
+    /**
+     * Gets a Setpoint for this profile at a specific time.
+     * 
+     * @param time Time to get the setpoint for, will be clamped within bounds of
+     *             profile
+     * @return The Setpoint describing the profile at the specified moment in time
+     */
     public Setpoint getSetpointAtTime(double time) {
         // Time should be within the bounds of the profile. If it is past the end, the
         // setpoint from the end of the profile should be returned.
@@ -70,7 +94,17 @@ public class SplineProfile {
         int index = Utils.binarySearch(times, time);
 
         Chunk chunk = Chunk.createVelocityDistance(chunkLength, velocities.get(index), velocities.get(index + 1));
-        return new Setpoint(chunk, time - times.get(index), index * chunkLength);
+        Setpoint sp = new Setpoint(chunk, time - times.get(index), index * chunkLength);
+        return sp;
+    }
+
+    /**
+     * Gets the time length of the profile.
+     * 
+     * @return Time at the end of the profile
+     */
+    public double getLength() {
+        return times.get(times.size() - 1);
     }
 
     // The maximum velocity the robot can go is limited by the maximum velocity the

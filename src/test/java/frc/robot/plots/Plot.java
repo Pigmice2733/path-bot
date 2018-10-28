@@ -28,6 +28,17 @@ class Plot {
             Color.MAGENTA, Color.ORANGE);
 
     /**
+     * Indicates whether a specific type/category of plot should be generated, based
+     * on command line flags.
+     * 
+     * @return Whether the specified plot type should be generated
+     */
+    public static Boolean shouldGraph(String type) {
+        String graphProp = System.getProperty("graph").toLowerCase();
+        return (graphProp.equals(type) || graphProp.equals("all") || graphProp.equals("a"));
+    }
+
+    /**
      * Initializes and sets up the renderer and plot. A JFreeChart must already have
      * been created.
      */
@@ -96,14 +107,15 @@ class Plot {
     }
 
     /**
-     * Saves the chart to the specified directory. If the specified directory
-     * doesn't exist, it will be created. Chart will be saved as a png file
-     * with the same name as the title of the chart. If a file of the same name
+     * Saves the chart to the specified directory, within ./graphs. If the specified
+     * directory doesn't exist, it will be created. Chart will be saved as a png
+     * file with the same name as the title of the chart. If a file of the same name
      * already exists, it will be deleted.
      * 
-     * @param directory The directory to save the chart in
+     * @param subDirectory The directory to save the chart in
      */
-    public void savePlot(String directory) {
+    public void save(String subDirectory) {
+        String directory = "./graphs" + File.separator + subDirectory;
         File file = new File(directory + File.separator + title.toLowerCase() + ".png");
 
         File path = new File(directory);
@@ -111,6 +123,7 @@ class Plot {
         if (!path.exists()) {
             if (!file.getParentFile().mkdirs()) {
                 System.err.println("Failed to create plot output directory " + file.getName());
+                return;
             }
         }
 
@@ -123,9 +136,11 @@ class Plot {
             }
             if (!success) {
                 System.err.println("Failed to create file " + file.getName());
+                return;
             }
         } catch (IOException ex) {
             System.err.println(ex);
+            return;
         }
 
         double aspectRatio = plot.getDomainAxis().getRange().getLength() / plot.getRangeAxis().getRange().getLength();

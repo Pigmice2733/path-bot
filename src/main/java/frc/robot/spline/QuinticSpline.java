@@ -12,8 +12,8 @@ import frc.robot.utils.Vector;
  * derivatives along the spline.
  */
 public class QuinticSpline {
-    ArrayList<Double> knots;
-    ArrayList<QuinticSplineSegment> segments;
+    private ArrayList<Double> knots;
+    private ArrayList<QuinticSplineSegment> segments;
 
     /**
      * Stores the curvature at the end of each of a series of chunks along a spline
@@ -64,6 +64,20 @@ public class QuinticSpline {
                     endDerivative, startSecondDerivative, endSecondDerivative);
             segments.add(segment);
         }
+    }
+
+    /**
+     * Gets all the control points of the spline.
+     * 
+     * @return An ArrayList holding the control points
+     */
+    public ArrayList<Point> getControlPoints() {
+        ArrayList<Point> controlPoints = new ArrayList<>();
+        for (QuinticSplineSegment segment : segments) {
+            controlPoints.add(segment.start);
+        }
+        controlPoints.add(segments.get(segments.size() - 1).end);
+        return controlPoints;
     }
 
     /**
