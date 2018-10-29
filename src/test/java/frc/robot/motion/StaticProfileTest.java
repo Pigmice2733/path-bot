@@ -3,28 +3,23 @@ package frc.robot.motion;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
-import frc.robot.utils.Plot;
+import frc.robot.plots.TimePlot;
 
 public class StaticProfileTest {
 
     private static final double epsilon = 1e-6;
-
-    private static Boolean shouldGraph() {
-        String graphProp = System.getProperty("graph").toLowerCase();
-        return (graphProp.equals("profile") || graphProp.equals("all") || graphProp.equals("a"));
-    }
 
     private static void plotProfile(StaticProfile profile, String name) {
         plotProfile(profile, name, profile.getDuration(), 0.025);
     }
 
     private static void plotProfile(StaticProfile profile, String name, double duration, double step) {
-        if (shouldGraph()) {
-            Plot profilePlot = new Plot(name, profile::getVelocity, duration, "Velocity", step);
-            profilePlot.addSeries(profile::getPosition, "Position", step);
-            profilePlot.addSeries(profile::getAcceleration, "Acceleration", step);
+        if (TimePlot.shouldGraph("profiles")) {
+            TimePlot profilePlot = new TimePlot(name, "Velocity", profile::getVelocity, duration, step);
+            profilePlot.addSeries("Position", profile::getPosition, step);
+            profilePlot.addSeries("Acceleration", profile::getAcceleration, step);
 
-            profilePlot.savePlot("./graphs/profiles/");
+            profilePlot.save("profiles");
         }
     }
 
@@ -78,6 +73,17 @@ public class StaticProfileTest {
             Assert.assertEquals(-1.0, trapezoidalProfile.getAcceleration(4.0), epsilon);
             Assert.assertEquals(-1.0, trapezoidalProfile.getAcceleration(6.5), epsilon);
             Assert.assertEquals(0.0, trapezoidalProfile.getAcceleration(7.0), epsilon);
+        }
+
+        @Test
+        public void getSetpoint() {
+            Setpoint actual = trapezoidalProfile.getSetpoint(6.5);
+
+            Assert.assertEquals(-1.0, actual.getAcceleration(), epsilon);
+            Assert.assertEquals(0.5, actual.getVelocity(), epsilon);
+            Assert.assertEquals(15.875, actual.getPosition(), epsilon);
+            Assert.assertEquals(0.0, actual.getCurvature(), epsilon);
+            Assert.assertEquals(0.0, actual.getHeading(), epsilon);
         }
 
         @Test

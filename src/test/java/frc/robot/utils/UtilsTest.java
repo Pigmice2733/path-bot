@@ -1,5 +1,7 @@
 package frc.robot.utils;
 
+import java.util.ArrayList;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -58,6 +60,26 @@ public class UtilsTest {
             Assert.assertFalse(Utils.almostEquals(-0.0, 5.0, epsilon));
             Assert.assertFalse(Utils.almostEquals(-2.0, 2.0, epsilon));
 
+        }
+    }
+
+    public static class BinarySearchTest {
+        @Test
+        public void search() {
+            ArrayList<Double> data = new ArrayList<>();
+            data.add(0.0);
+            data.add(1.0);
+            data.add(6.0);
+            data.add(7.0);
+            data.add(9.0);
+            data.add(9.0);
+            data.add(10.0);
+            data.add(40.0);
+
+            Assert.assertEquals(6, Utils.binarySearch(data, 12.0));
+            Assert.assertEquals(0, Utils.binarySearch(data, -1.0));
+            Assert.assertEquals(3, Utils.binarySearch(data, 9.0));
+            Assert.assertEquals(6, Utils.binarySearch(data, 50.0));
         }
     }
 }

@@ -11,38 +11,6 @@ public class StaticProfile {
     private double maxAccel, maxDecel, maxVelocity, startingPosition;
     private double profileDuration;
 
-    private class Moment {
-        private final double acceleration, velocity, distance;
-
-        public Moment(Chunk chunk, double time, double previousDistance) {
-            acceleration = chunk.getAcceleration();
-            velocity = chunk.getVelocity(time);
-            distance = chunk.getPosition(time) + previousDistance;
-        }
-
-        public Moment(double acceleration, double velocity, double distance) {
-            this.acceleration = acceleration;
-            this.velocity = velocity;
-            this.distance = distance;
-        }
-
-        public double getAcceleration() {
-            return acceleration;
-        }
-
-        public double getVelocity() {
-            return velocity;
-        }
-
-        public double getPosition() {
-            return distance;
-        }
-    }
-
-    private Moment getEndMoment(double distance) {
-        return new Moment(0.0, 0.0, distance);
-    }
-
     public StaticProfile(double currentVelocity, double currentPosition, double targetDistance, double maxVelocity,
             double maxAccel, double maxDecel) {
         final double targetDisplacement = targetDistance - currentPosition;
@@ -150,35 +118,39 @@ public class StaticProfile {
     }
 
     public double getVelocity(double time) {
-        return getMoment(time).getVelocity();
+        return getSetpoint(time).getVelocity();
     }
 
     public double getPosition(double time) {
-        return getMoment(time).getPosition();
+        return getSetpoint(time).getPosition();
     }
 
     public double getAcceleration(double time) {
-        return getMoment(time).getAcceleration();
+        return getSetpoint(time).getAcceleration();
     }
 
     public double getDuration() {
         return profileDuration;
     }
 
-    private Moment getMoment(double time) {
+    private Setpoint getEndSetpoint(double distance) {
+        return new Setpoint(distance, 0.0, 0.0, 0.0, 0.0);
+    }
+
+    public Setpoint getSetpoint(double time) {
         double chunkStartTime = 0.0;
         double previousDistance = startingPosition;
         // find the chunk that this time is in and return it
         for (Chunk chunk : chunks) {
             double chunkEndTime = chunkStartTime + chunk.getDuration();
             if (time < chunkEndTime) {
-                return new Moment(chunk, time - chunkStartTime, previousDistance);
+                return new Setpoint(chunk, time - chunkStartTime, previousDistance, 0.0, 0.0);
             }
             chunkStartTime = chunkEndTime;
             previousDistance += chunk.getTotalDistance();
         }
         // time is past all the chunks, return end moment - acceleration, velocity are
         // zero, distance is the same as the end of the profile
-        return getEndMoment(previousDistance);
+        return getEndSetpoint(previousDistance);
     }
 }
