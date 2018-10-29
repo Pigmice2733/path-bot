@@ -79,11 +79,20 @@ public class QuinticSplineTest {
 
     @Test
     public void curvatureChunks() {
-        ArrayList<Double> chunks = spline.computeCurvatureChunks(10.0);
+        ArrayList<Double> chunks = spline.computeSplineChunks(10.0).getCurvatureChunks();
         Assert.assertEquals(0.5, chunks.get(0), epsilon);
         Assert.assertEquals(-0.20015517144121364, chunks.get(1), epsilon);
         Assert.assertEquals(-0.023657782253813504, chunks.get(2), epsilon);
         Assert.assertEquals(-0.0023610720938180628, chunks.get(3), epsilon);
+    }
+
+    @Test
+    public void headingChunks() {
+        ArrayList<Double> chunks = spline.computeSplineChunks(10.0).getHeadingChunks();
+        Assert.assertEquals(0.500000000, chunks.get(0), epsilon);
+        Assert.assertEquals(0.847187428, chunks.get(1), epsilon);
+        Assert.assertEquals(-1.556796834, chunks.get(2), epsilon);
+        Assert.assertEquals(-0.018410761, chunks.get(3), epsilon);
     }
 
     @Test

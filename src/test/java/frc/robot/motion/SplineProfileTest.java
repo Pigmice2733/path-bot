@@ -48,16 +48,22 @@ public class SplineProfileTest {
         Assert.assertEquals(1.9600, sp.getPosition(), epsilon);
         Assert.assertEquals(2.8000, sp.getVelocity(), epsilon);
         Assert.assertEquals(2.0, sp.getAcceleration(), epsilon);
+        Assert.assertEquals(0.0, sp.getCurvature(), epsilon);
+        Assert.assertEquals(Math.PI / 2.0, sp.getHeading(), epsilon);
 
         sp = profile.getSetpointAtTime(2.4);
         Assert.assertEquals(4.9500, sp.getPosition(), epsilon);
         Assert.assertEquals(3.0000, sp.getVelocity(), epsilon);
         Assert.assertEquals(0.0, sp.getAcceleration(), epsilon);
+        Assert.assertEquals(0.0, sp.getCurvature(), epsilon);
+        Assert.assertEquals(Math.PI / 2.0, sp.getHeading(), epsilon);
 
         sp = profile.getSetpointAtTime(4.0);
         Assert.assertEquals(9.3052, sp.getPosition(), epsilon);
         Assert.assertEquals(1.6670, sp.getVelocity(), epsilon);
         Assert.assertEquals(-2.0, sp.getAcceleration(), epsilon);
+        Assert.assertEquals(0.0, sp.getCurvature(), epsilon);
+        Assert.assertEquals(Math.PI / 2.0, sp.getHeading(), epsilon);
     }
 
     @AfterClass

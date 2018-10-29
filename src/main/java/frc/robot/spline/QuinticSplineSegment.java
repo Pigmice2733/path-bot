@@ -127,18 +127,19 @@ class QuinticSplineSegment {
     }
 
     /**
-     * Computes the curvature at the boundaries a series of chunks of uniform length
-     * along the spline segment.
+     * Computes the heading and curvature at the boundaries a series of chunks of
+     * uniform length along the spline segment.
      * 
      * @param chunkLength      The length each chunk should be
      * @param initialArcLength Arc length value to starting measuring the chunks out
      *                         from at the start of the spline
-     * @return An object containing an array of the curvatures at the end of each
-     *         chunk, and the extra arc length that was not counted as part of a
-     *         full chunk
+     * @return An object containing an array of the curvatures, and an array of the
+     *         headings (in radians) at the end of each chunk, and the extra arc
+     *         length that was not counted as part of a full chunk
      */
-    protected QuinticSpline.CurvatureChunks getCurvatureChunks(double chunkLength, double initialArcLength) {
+    protected QuinticSpline.SplineChunks getSplineChunks(double chunkLength, double initialArcLength) {
         ArrayList<Double> curvatureSegments = new ArrayList<>();
+        ArrayList<Double> headingSegments = new ArrayList<>();
 
         double currentArcLength = initialArcLength;
         double arcLengthOfPreviousChunk = 0.0;
@@ -150,11 +151,13 @@ class QuinticSplineSegment {
             if ((currentArcLength - arcLengthOfPreviousChunk) > chunkLength) {
                 arcLengthOfPreviousChunk = currentArcLength;
                 curvatureSegments.add(getCurvature(s));
+                headingSegments.add(getHeading(s));
             }
             s += stepSize;
         }
 
-        return new QuinticSpline.CurvatureChunks(curvatureSegments, currentArcLength - arcLengthOfPreviousChunk);
+        return new QuinticSpline.SplineChunks(curvatureSegments, headingSegments,
+                currentArcLength - arcLengthOfPreviousChunk);
     }
 
     /**
@@ -224,5 +227,16 @@ class QuinticSplineSegment {
         double divisor = Math.pow(first.getX() * first.getX() + first.getY() * first.getY(), 1.5);
 
         return dividend / divisor;
+    }
+
+    /**
+     * Calculates the heading, in radians, of the robot at the specified local
+     * parameter variable value.
+     * 
+     * @param s The value of the local parameter variable to find the curvature at
+     * @return The heading in radians
+     */
+    protected double getHeading(double s) {
+        return getDerivative(s).getAngle();
     }
 }

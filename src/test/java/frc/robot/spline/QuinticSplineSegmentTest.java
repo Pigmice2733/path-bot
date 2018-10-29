@@ -102,6 +102,17 @@ public class QuinticSplineSegmentTest {
         Assert.assertEquals(0.0, curved.getCurvature(1.0), epsilon);
     }
 
+    @Test
+    public void heading() {
+        Assert.assertEquals(0.5 * Math.PI, straight.getHeading(0.0), epsilon);
+        Assert.assertEquals(0.5 * Math.PI, straight.getHeading(0.5), epsilon);
+        Assert.assertEquals(0.5 * Math.PI, straight.getHeading(1.0), epsilon);
+
+        Assert.assertEquals(0.0, curved.getHeading(0.0), epsilon);
+        Assert.assertEquals(0.5 * Math.PI, curved.getHeading(0.5), epsilon);
+        Assert.assertEquals(Math.PI, curved.getHeading(1.0), epsilon);
+    }
+
     @AfterClass
     public static void plot() {
         if (XYPlot.shouldGraph("splines")) {

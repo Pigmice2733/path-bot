@@ -134,7 +134,7 @@ public class StaticProfile {
     }
 
     private Setpoint getEndSetpoint(double distance) {
-        return new Setpoint(distance, 0.0, 0.0);
+        return new Setpoint(distance, 0.0, 0.0, 0.0, 0.0);
     }
 
     public Setpoint getSetpoint(double time) {
@@ -144,7 +144,7 @@ public class StaticProfile {
         for (Chunk chunk : chunks) {
             double chunkEndTime = chunkStartTime + chunk.getDuration();
             if (time < chunkEndTime) {
-                return new Setpoint(chunk, time - chunkStartTime, previousDistance);
+                return new Setpoint(chunk, time - chunkStartTime, previousDistance, 0.0, 0.0);
             }
             chunkStartTime = chunkEndTime;
             previousDistance += chunk.getTotalDistance();

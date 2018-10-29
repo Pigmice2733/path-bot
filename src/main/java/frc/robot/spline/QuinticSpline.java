@@ -16,26 +16,50 @@ public class QuinticSpline {
     private ArrayList<QuinticSplineSegment> segments;
 
     /**
-     * Stores the curvature at the end of each of a series of chunks along a spline
-     * segment, as well as how much arc length was left over at the end of a
-     * segment.
+     * Stores the curvature and heading (in radians) at the end of each of a series
+     * of chunks along a spline segment, as well as how much arc length was left
+     * over at the end of a segment.
      */
-    protected static class CurvatureChunks {
+    public static class SplineChunks {
         private ArrayList<Double> curvatureChunks;
+        private ArrayList<Double> headingChunks;
         private double remainingArcLength;
 
         /**
-         * Creates a new CurvatureChunks given the curvature chunks, and the remaining
-         * arc length from the segment that was not included as one of the chunks.
+         * Creates a new SplineChunks given the heading and curvature chunks, and the
+         * remaining arc length from the segment that was not included as one of the
+         * chunks.
          * 
          * @param curvatureChunks    An array of signed curvature values at the end of
+         *                           each chunk
+         * @param headingChunks      An array of heading values in radians at the end of
          *                           each chunk
          * @param remainingArcLength The amount of remaining arc length that was not
          *                           counted as part of a chunk
          */
-        protected CurvatureChunks(ArrayList<Double> curvatureChunks, double remainingArcLength) {
+        protected SplineChunks(ArrayList<Double> curvatureChunks, ArrayList<Double> headingChunks,
+                double remainingArcLength) {
             this.curvatureChunks = curvatureChunks;
+            this.headingChunks = headingChunks;
             this.remainingArcLength = remainingArcLength;
+        }
+
+        /**
+         * Gets the curvature chunks.
+         * 
+         * @return ArrayList of the curvatures
+         */
+        public ArrayList<Double> getCurvatureChunks() {
+            return curvatureChunks;
+        }
+
+        /**
+         * Gets the heading chunks.
+         * 
+         * @return ArrayList of the headings, in radians
+         */
+        public ArrayList<Double> getHeadingChunks() {
+            return headingChunks;
         }
     }
 
@@ -167,7 +191,8 @@ public class QuinticSpline {
     }
 
     /**
-     * Computes the curvature at the boundaries a series of chunks of uniform length
+     * Computes the heading and curvature at the boundaries a series of chunks of
+     * uniform length
      * along the spline. Knowing the curvature of the spline at a series of points
      * along it allows the creation of motion profiles to efficiently follow to
      * spline.
@@ -175,19 +200,22 @@ public class QuinticSpline {
      * @param chunkLength The length each chunk should be
      * @return An array of the curvatures at the end of each chunk
      */
-    public ArrayList<Double> computeCurvatureChunks(double chunkLength) {
-        ArrayList<Double> curvatureSegments = new ArrayList<>();
+    public SplineChunks computeSplineChunks(double chunkLength) {
+        ArrayList<Double> curvatureChunks = new ArrayList<>();
+        ArrayList<Double> headingChunks = new ArrayList<>();
 
-        curvatureSegments.add(segments.get(0).getCurvature(0.0));
+        curvatureChunks.add(segments.get(0).getCurvature(0.0));
+        headingChunks.add(segments.get(0).getCurvature(0.0));
 
         double initialArcLength = 0.0;
         for (QuinticSplineSegment segment : segments) {
-            CurvatureChunks chunks = segment.getCurvatureChunks(chunkLength, initialArcLength);
+            SplineChunks chunks = segment.getSplineChunks(chunkLength, initialArcLength);
             initialArcLength = chunks.remainingArcLength;
-            curvatureSegments.addAll(chunks.curvatureChunks);
+            curvatureChunks.addAll(chunks.curvatureChunks);
+            headingChunks.addAll(chunks.headingChunks);
         }
 
-        return curvatureSegments;
+        return new SplineChunks(curvatureChunks, headingChunks, 0.0);
     }
 
     /**

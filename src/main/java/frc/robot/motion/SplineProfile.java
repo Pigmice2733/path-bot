@@ -3,12 +3,15 @@ package frc.robot.motion;
 import java.util.ArrayList;
 
 import frc.robot.spline.QuinticSpline;
+import frc.robot.spline.QuinticSpline.SplineChunks;
 import frc.robot.utils.Bounds;
 import frc.robot.utils.Utils;
 
 public class SplineProfile {
     public ArrayList<Double> velocities;
     public ArrayList<Double> times;
+    public ArrayList<Double> curvatures;
+    public ArrayList<Double> headings;
     private double trackWidth;
     private double maxWheelVelocity;
     private double chunkLength;
@@ -26,7 +29,9 @@ public class SplineProfile {
      */
     public SplineProfile(QuinticSpline spline, double chunkLength, double maxWheelVelocity, double maxAcceleration,
             double trackWidth) {
-        ArrayList<Double> curvatureChunks = spline.computeCurvatureChunks(chunkLength);
+        SplineChunks chunks = spline.computeSplineChunks(chunkLength);
+        curvatures = chunks.getCurvatureChunks();
+        headings = chunks.getHeadingChunks();
 
         velocities = new ArrayList<>();
         times = new ArrayList<>();
@@ -40,9 +45,9 @@ public class SplineProfile {
 
         // Iterate over list forwards and calculate maximum velocities possible based on
         // path curvature, and the robot's acceleration limit.
-        for (int i = 1; i < curvatureChunks.size(); i++) {
+        for (int i = 1; i < curvatures.size(); i++) {
             double initialVelocity = velocities.get(i - 1);
-            double curvatureVelocityLimit = maxVelocityFromCurvature(curvatureChunks.get(i));
+            double curvatureVelocityLimit = maxVelocityFromCurvature(curvatures.get(i));
             // The maximum velocity is the minimum of the maximum velocity possible based on
             // the path curvature, and the maximum velocity attainable if the robot
             // accelerated across the entire previous chunk.
@@ -58,7 +63,7 @@ public class SplineProfile {
         // Iterate over list backwards and calculate maximum velocities possible based
         // on the robot's acceleration limit, and the limits calculated during the
         // forward pass.
-        for (int i = curvatureChunks.size() - 1; i >= 0; i--) {
+        for (int i = curvatures.size() - 1; i >= 0; i--) {
             // The maximum velocity is the minimum of the maximum velocity calcuated the
             // first time through, and the maximum velocity the robot can have and still
             // have enoguh time to decelerate to stay within the velocity limit of the next
@@ -77,6 +82,9 @@ public class SplineProfile {
             time += chunkLength / averageVelocity;
             times.add(time);
         }
+
+        curvatures.add(0, curvatures.get(0));
+        headings.add(0, headings.get(0));
     }
 
     /**
@@ -93,8 +101,10 @@ public class SplineProfile {
 
         int index = Utils.binarySearch(times, time);
 
-        Chunk chunk = Chunk.createVelocityDistance(chunkLength, velocities.get(index), velocities.get(index + 1));
-        Setpoint sp = new Setpoint(chunk, time - times.get(index), index * chunkLength);
+        Chunk chunk = Chunk.createVelocityDistance(chunkLength, velocities.get(index), velocities.get(index + 1),
+                curvatures.get(index), curvatures.get(+1), 0.0, 0.0);
+        Setpoint sp = new Setpoint(chunk, time - times.get(index), index * chunkLength, curvatures.get(index),
+                headings.get(index));
         return sp;
     }
 

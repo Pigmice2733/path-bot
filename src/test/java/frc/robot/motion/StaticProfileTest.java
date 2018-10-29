@@ -79,9 +79,11 @@ public class StaticProfileTest {
         public void getSetpoint() {
             Setpoint actual = trapezoidalProfile.getSetpoint(6.5);
 
-            Assert.assertEquals(actual.getAcceleration(), -1.0, epsilon);
-            Assert.assertEquals(actual.getVelocity(), 0.5, epsilon);
-            Assert.assertEquals(actual.getPosition(), 15.875, epsilon);
+            Assert.assertEquals(-1.0, actual.getAcceleration(), epsilon);
+            Assert.assertEquals(0.5, actual.getVelocity(), epsilon);
+            Assert.assertEquals(15.875, actual.getPosition(), epsilon);
+            Assert.assertEquals(0.0, actual.getCurvature(), epsilon);
+            Assert.assertEquals(0.0, actual.getHeading(), epsilon);
         }
 
         @Test
