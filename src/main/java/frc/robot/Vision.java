@@ -43,8 +43,6 @@ public class Vision {
                 initializePort();
             }
 
-            port.setTimeout(0.03);
-
             while (!Thread.interrupted() && enabledStatus.get()) {
                 try {
                     parseInput(remainingInput + port.readString());
@@ -57,7 +55,7 @@ public class Vision {
     }
 
     private void parseInput(String input) {
-        int i = input.indexOf("RED");
+        int i = input.lastIndexOf("RED");
         if (i != -1) {
             String[] redData;
             try {
@@ -72,10 +70,12 @@ public class Vision {
                     }
                 }
             } catch (StringIndexOutOfBoundsException e) {
+                remainingInput = input.substring(i);
+                return;
             }
         }
 
-        i = input.indexOf("BLUE");
+        i = input.lastIndexOf("BLUE");
         if (i != -1) {
             String[] blueData;
             try {
@@ -90,11 +90,14 @@ public class Vision {
                     }
                 }
             } catch (StringIndexOutOfBoundsException e) {
+                remainingInput = input.substring(i);
+                return;
             }
 
             try {
                 remainingInput = input.substring(i + 18);
             } catch (StringIndexOutOfBoundsException e) {
+                remainingInput = "";
             }
         }
     }
