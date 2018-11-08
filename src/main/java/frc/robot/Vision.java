@@ -9,8 +9,12 @@ public class Vision {
     private StatusCheck enabledStatus;
     private Thread thread;
 
-    private volatile String remainingInput = "";
-    private volatile int[] ballData = { 0, 0, 0, 0 };
+    public enum Color {
+        RED, BLUE, NONE,
+    }
+
+    private String remainingInput = "";
+    private volatile Color ballColor;
 
     public Vision(StatusCheck enabled) {
         enabledStatus = enabled;
@@ -32,8 +36,8 @@ public class Vision {
         thread = createThread();
     }
 
-    public synchronized int[] getBallData() {
-        return ballData.clone();
+    public synchronized Color getBallColor() {
+        return ballColor;
     }
 
     private Thread createThread() {
@@ -55,61 +59,26 @@ public class Vision {
     }
 
     private void parseInput(String input) {
-        int i = input.lastIndexOf("RED");
-        if (i != -1) {
-            String[] redData;
-            try {
-                redData = input.substring(i + 4, i + 13).split(" ");
-                if (redData.length == 2) {
-                    try {
-                        int x = Integer.parseInt(redData[0]);
-                        int y = Integer.parseInt(redData[1]);
-                        writeRedData(x, y);
-                    } catch (NumberFormatException e) {
-                        System.out.println(e.toString());
-                    }
-                }
-            } catch (StringIndexOutOfBoundsException e) {
-                remainingInput = input.substring(i);
-                return;
-            }
-        }
+        int redIndex = input.lastIndexOf("RED");
+        int blueIndex = input.lastIndexOf("BLUE");
+        int noneIndex = input.lastIndexOf("NONE");
 
-        i = input.lastIndexOf("BLUE");
-        if (i != -1) {
-            String[] blueData;
-            try {
-                blueData = input.substring(i + 5, i + 14).split(" ");
-                if (blueData.length == 2) {
-                    try {
-                        int x = Integer.parseInt(blueData[0]);
-                        int y = Integer.parseInt(blueData[1]);
-                        writeBlueData(x, y);
-                    } catch (NumberFormatException e) {
-                        System.out.println(e.toString());
-                    }
-                }
-            } catch (StringIndexOutOfBoundsException e) {
-                remainingInput = input.substring(i);
-                return;
-            }
-
-            try {
-                remainingInput = input.substring(i + 18);
-            } catch (StringIndexOutOfBoundsException e) {
-                remainingInput = "";
-            }
+        if (redIndex > blueIndex && redIndex > noneIndex) {
+            setBallColor(Color.RED);
+            remainingInput = input.substring(redIndex + 3);
+        } else if (blueIndex > redIndex && blueIndex > noneIndex) {
+            setBallColor(Color.BLUE);
+            remainingInput = input.substring(blueIndex + 4);
+        } else if (noneIndex > redIndex && noneIndex > blueIndex) {
+            setBallColor(Color.NONE);
+            remainingInput = input.substring(noneIndex + 4);
+        } else {
+            remainingInput = input;
         }
     }
 
-    private synchronized void writeRedData(int x, int y) {
-        ballData[0] = x;
-        ballData[1] = y;
-    }
-
-    private synchronized void writeBlueData(int x, int y) {
-        ballData[2] = x;
-        ballData[3] = y;
+    private synchronized void setBallColor(Color ballColor) {
+        this.ballColor = ballColor;
     }
 
     private void initializePort() {

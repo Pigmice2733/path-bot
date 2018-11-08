@@ -25,7 +25,23 @@ public class Robot extends TimedRobot {
         setPeriod(0.02);
     }
 
+    public void autonomousInit() {
+
+    }
+
+    public void autonomousPeriodic() {
+
+    }
+
+    public void teleopInit() {
+
+    }
+
     public void teleopPeriodic() {
         drivetrain.arcadeDrive(-joy.getY(), joy.getX());
+    }
+
+    public void disabledInit() {
+
     }
 }
